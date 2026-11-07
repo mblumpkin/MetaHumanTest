@@ -37,6 +37,7 @@ class UImage;
 class UTexture2D;
 class UCPP_UW_IHPCNavTab;
 class UCPP_UW_IHPCAnalysisPanel;
+class UCPP_UW_IHPCTimeline;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FIHPCTabChanged, EIHPCNavTab, NewTab);
 
@@ -124,9 +125,14 @@ protected:
 
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UCPP_UW_IHPCAnalysisPanel> AnalysisPanel;
 
+	/** Playback / timeline bar at the bottom (Figma "ihpc ui (1)ee 1"). Replaces the old prototype timeline. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UCPP_UW_IHPCTimeline> Timeline;
+
 private:
 	UFUNCTION() void HandleChevronClicked();
 	UFUNCTION() void HandleTabClicked(EIHPCNavTab Tab);
+	UFUNCTION() void HandleRecordingSaved(const FIHPCTaggedMoment& Moment);
+	UFUNCTION() void HandleBookmarkAdded(const FIHPCTaggedMoment& Moment);
 
 	/** Updates the circle colour, arrow picture and position for the current open/closed state. */
 	void RefreshChevron();

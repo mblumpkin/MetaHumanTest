@@ -109,6 +109,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "IHPC|Accordion")
 	void SetTaggedPoints(const TArray<FIHPCTaggedMoment>& Points);
 
+	/** Adds one row to the end of "Tagged Points" (used for new bookmarks / recordings from the timeline). */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Accordion")
+	void AddTaggedPoint(const FIHPCTaggedMoment& Point);
+
 	/** Fills the "Active Muscles" list. */
 	UFUNCTION(BlueprintCallable, Category = "IHPC|Accordion")
 	void SetActiveMuscles(const TArray<FText>& MuscleNames);

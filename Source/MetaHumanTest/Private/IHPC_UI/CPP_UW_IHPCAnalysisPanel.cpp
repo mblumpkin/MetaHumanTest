@@ -63,6 +63,31 @@ void UCPP_UW_IHPCAnalysisPanel::SetZoomedGraphVisible(bool bVisible)
 	}
 }
 
+void UCPP_UW_IHPCAnalysisPanel::AddSavedVideo(const FIHPCTaggedMoment& Moment)
+{
+	if (VideosRow)
+	{
+		VideosRow->AddMoment(Moment);         // new card at the end of the row
+	}
+	if (GraphAccordion)
+	{
+		GraphAccordion->AddTaggedPoint(Moment);
+	}
+}
+
+void UCPP_UW_IHPCAnalysisPanel::AddTaggedPoint(const FIHPCTaggedMoment& Moment)
+{
+	if (GraphAccordion)
+	{
+		GraphAccordion->AddTaggedPoint(Moment);
+	}
+}
+
+TArray<FIHPCTaggedMoment> UCPP_UW_IHPCAnalysisPanel::GetSavedVideos() const
+{
+	return VideosRow ? VideosRow->GetMoments() : TArray<FIHPCTaggedMoment>();
+}
+
 void UCPP_UW_IHPCAnalysisPanel::HandleZoomRequested()
 {
 	SetZoomedGraphVisible(!bZoomedGraphVisible);   // zoom button toggles the large graph

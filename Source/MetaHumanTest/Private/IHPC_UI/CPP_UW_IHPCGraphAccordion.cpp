@@ -276,6 +276,12 @@ void UCPP_UW_IHPCGraphAccordion::SetTaggedPoints(const TArray<FIHPCTaggedMoment>
 	RebuildTaggedPointsList();
 }
 
+void UCPP_UW_IHPCGraphAccordion::AddTaggedPoint(const FIHPCTaggedMoment& Point)
+{
+	TaggedPoints.Add(Point);
+	RebuildTaggedPointsList();
+}
+
 void UCPP_UW_IHPCGraphAccordion::RebuildActiveMusclesList()
 {
 	if (!ActiveMusclesList)

@@ -52,6 +52,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "IHPC|Panel")
 	bool IsZoomedGraphVisible() const { return bZoomedGraphVisible; }
 
+	/** Adds a new clip: a new card in the videos row AND a new row in Tagged Points. */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Panel")
+	void AddSavedVideo(const FIHPCTaggedMoment& Moment);
+
+	/** Adds a row to Tagged Points only (e.g. a bookmark). */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Panel")
+	void AddTaggedPoint(const FIHPCTaggedMoment& Moment);
+
+	/** The moments shown as video cards. */
+	UFUNCTION(BlueprintPure, Category = "IHPC|Panel")
+	TArray<FIHPCTaggedMoment> GetSavedVideos() const;
+
 protected:
 	virtual void NativePreConstruct() override;
 	virtual void NativeConstruct() override;

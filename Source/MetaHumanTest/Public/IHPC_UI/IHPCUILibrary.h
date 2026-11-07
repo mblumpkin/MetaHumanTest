@@ -36,6 +36,34 @@ public:
 	UFUNCTION(BlueprintPure, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
 	static float GetAvatarTimelineTime(const UObject* WorldContextObject);
 
+	/** Starts the avatar animation playing forward. If it is at the very end and bRestartIfAtEnd, starts from 0. */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
+	static bool PlayAvatar(const UObject* WorldContextObject, bool bRestartIfAtEnd = true);
+
+	/** Pauses the avatar animation. */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
+	static bool PauseAvatar(const UObject* WorldContextObject);
+
+	/** True while the avatar animation is playing. */
+	UFUNCTION(BlueprintPure, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
+	static bool IsAvatarPlaying(const UObject* WorldContextObject);
+
+	/** Playback speed multiplier (1 = normal, 0.5 = half speed, 2 = double speed). */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
+	static bool SetAvatarPlaySpeed(const UObject* WorldContextObject, float Speed);
+
+	/** Current playback speed multiplier, or -1 if no timeline was found. */
+	UFUNCTION(BlueprintPure, Category = "IHPC|Timeline", meta = (WorldContext = "WorldContextObject"))
+	static float GetAvatarPlaySpeed(const UObject* WorldContextObject);
+
+	/** Date in the Figma card style, e.g. "Jan 4th, 2026". */
+	UFUNCTION(BlueprintPure, Category = "IHPC|Format")
+	static FText FormatFigmaDate(const FDateTime& When);
+
+	/** Time in the Figma card style, e.g. "13:55 p.m.". */
+	UFUNCTION(BlueprintPure, Category = "IHPC|Format")
+	static FText FormatFigmaTime(const FDateTime& When);
+
 	/** Converts a Figma hex colour (e.g. "B3CA7F") plus opacity into an Unreal linear colour. */
 	UFUNCTION(BlueprintPure, Category = "IHPC|Style")
 	static FLinearColor FigmaColor(const FString& Hex, float Opacity = 1.f);

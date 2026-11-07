@@ -4,6 +4,7 @@
 
 #include "IHPC_UI/CPP_UW_IHPCAnalysisPanel.h"
 #include "IHPC_UI/CPP_UW_IHPCNavTab.h"
+#include "IHPC_UI/CPP_UW_IHPCTimeline.h"
 #include "IHPC_UI/IHPCUILibrary.h"
 
 #include "Components/Button.h"
@@ -65,8 +66,36 @@ void UCPP_UW_IHPCHud::NativeConstruct()
 		}
 	}
 
+	// Timeline bar: its orange markers start as the saved videos; new recordings / bookmarks
+	// made on the timeline are added to the analysis panel's lists.
+	if (Timeline)
+	{
+		if (AnalysisPanel)
+		{
+			Timeline->SetMarkers(AnalysisPanel->GetSavedVideos());
+		}
+		Timeline->OnRecordingSaved.AddUniqueDynamic(this, &UCPP_UW_IHPCHud::HandleRecordingSaved);
+		Timeline->OnBookmarkAdded.AddUniqueDynamic(this, &UCPP_UW_IHPCHud::HandleBookmarkAdded);
+	}
+
 	SetNavBarOpen(bStartWithNavBarOpen);
 	SelectTab(EIHPCNavTab::None);   // nothing selected, analysis panel closed
+}
+
+void UCPP_UW_IHPCHud::HandleRecordingSaved(const FIHPCTaggedMoment& Moment)
+{
+	if (AnalysisPanel)
+	{
+		AnalysisPanel->AddSavedVideo(Moment);   // new video card + new tagged point
+	}
+}
+
+void UCPP_UW_IHPCHud::HandleBookmarkAdded(const FIHPCTaggedMoment& Moment)
+{
+	if (AnalysisPanel)
+	{
+		AnalysisPanel->AddTaggedPoint(Moment);  // new tagged point
+	}
 }
 
 // ============================================================================
