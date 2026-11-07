@@ -228,8 +228,62 @@ def make_video_card_background():
     print("wrote", os.path.relpath(path, ROOT), img.size)
 
 
+# ---------------------------------------------------------------------------
+# 7. Playback / timeline bar (Figma layer "ihpc ui (1)ee 1" on frame "iPad Pro 12.9" - 1")
+# ---------------------------------------------------------------------------
+
+# Bounding boxes (x0, y0, x1, y1, inclusive) of each glossy button inside timeline_raw_1.png.
+# That picture is 3146 x 306 = 3x the 1048 x 102 Figma layer. Measured from its alpha channel.
+TIMELINE_BUTTONS = {
+    "T_IHPC_TL_Record":      (61, 84, 197, 220),
+    "T_IHPC_TL_Restart":     (227, 65, 400, 238),
+    "T_IHPC_TL_Pause":       (430, 54, 624, 248),
+    "T_IHPC_TL_SlowDown":    (651, 87, 788, 223),
+    "T_IHPC_TL_SpeedUp":     (2396, 81, 2533, 218),
+    "T_IHPC_TL_Play":        (2562, 54, 2756, 248),
+    "T_IHPC_TL_FastForward": (2782, 68, 2950, 235),
+    "T_IHPC_TL_Bookmark":    (2975, 84, 3111, 220),
+}
+
+
+def make_timeline_assets():
+    """Cuts the buttons and the slider knob out of the Figma timeline picture, and draws the
+    orange marker dot. The track itself is drawn by Unreal (two rounded bars), because its
+    dark/light split has to move with the animation."""
+    src = Image.open(os.path.join(SRC, "timeline_raw_1.png")).convert("RGBA")
+
+    # Buttons: exact crops (each button is separate, so the crop has a transparent background).
+    for name, (x0, y0, x1, y1) in TIMELINE_BUTTONS.items():
+        crop = src.crop((x0, y0, x1 + 1, y1 + 1))
+        path = os.path.join(OUT, name + ".png")
+        crop.save(path)
+        print("wrote", os.path.relpath(path, ROOT), crop.size)
+
+    # Knob: centre (1661.5, 148), radius 64.5 px in the 3x picture (43 px across in Figma).
+    # It sits on top of the track, so cut a circle out (everything outside -> transparent).
+    cx, cy, r = 1661.5, 148.0, 64.6
+    box = (int(cx - r - 1), int(cy - r - 1), int(cx + r + 2), int(cy + r + 2))
+    knob = np.array(src.crop(box)).astype(np.float32)
+    h, w = knob.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    dist = np.sqrt((xx + box[0] + 0.5 - cx) ** 2 + (yy + box[1] + 0.5 - cy) ** 2)
+    coverage = np.clip(r - dist + 0.5, 0.0, 1.0)            # 1 inside, 0 outside, smooth 1 px edge
+    knob[..., 3] = knob[..., 3] * coverage
+    path = os.path.join(OUT, "T_IHPC_TL_Thumb.png")
+    Image.fromarray(knob.clip(0, 255).astype(np.uint8)).save(path)
+    print("wrote", os.path.relpath(path, ROOT), (w, h))
+
+    # Marker: white ring 19 px across with an orange (#EB8D71) dot 13.67 px across (Figma px).
+    img, k = new_canvas(19, 19)
+    img = layer(img, lambda d: d.ellipse([0, 0, 19 * k, 19 * k], fill=rgba("#FFFFFF")))
+    o = (19 - 13.67) / 2
+    img = layer(img, lambda d: d.ellipse([o * k, o * k, (19 - o) * k, (19 - o) * k], fill=rgba("#EB8D71")))
+    finish(img, 19, 19, "T_IHPC_TL_Marker.png")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    make_timeline_assets()
     make_toggle("T_IHPC_Toggle_Off.png", "#D9D9D9", 0.20, 10.5, 0.65)
     make_toggle("T_IHPC_Toggle_On.png", "#B3CA7F", 0.76, 27.5, 0.75)
     make_small_chevron()
