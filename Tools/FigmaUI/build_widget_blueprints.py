@@ -658,6 +658,69 @@ def use_layer_switcher_instead_of_placeholder():
                                                     '/Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD']})['returnValue']
 
 
+# ---------------------------------------------------------------------------
+# 11. Tab panels + close "X" in WBP_IHPC_HUD (step 4)
+# ---------------------------------------------------------------------------
+# Profile / Progress / History & Timeline / Settings get an empty panel with the look of Figma frame 5
+# "Rectangle 26" (rgba(0,0,0,0.62), radius 29, 1217 x 798, 167 from the top, centred) - the same rectangle the
+# analysis panel uses as its background. The close "X" is not in Figma: a 38 px round button in the HUD's
+# colours (title-bar navy #1D3C55, hover = nav-bar #274A65, thin white rim) with the white rounded-stroke X,
+# sitting on the panel's top-right rounded corner (centre 8.5 px in from both edges = on the corner curve).
+TAB_PANELS = ['ProfilePanel', 'ProgressPanel', 'HistoryTimelinePanel', 'SettingsPanel']
+CLOSE_SIZE = 38
+CLOSE_BTN = ((('RoundedBox',), {'color': ('1D3C55', 1.0), 'radii': (CLOSE_SIZE / 2,) * 4, 'outline': (('FFFFFF', 0.35), 1.5)}),
+             (('RoundedBox',), {'color': ('274A65', 1.0), 'radii': (CLOSE_SIZE / 2,) * 4, 'outline': (('FFFFFF', 0.55), 1.5)}),
+             (('RoundedBox',), {'color': ('183C55', 1.0), 'radii': (CLOSE_SIZE / 2,) * 4, 'outline': (('FFFFFF', 0.35), 1.5)}))
+
+
+def add_tab_panels_and_close_button():
+    hud = WIDGETS + 'WBP_IHPC_HUD.WBP_IHPC_HUD'
+    canvas = {'refPath': hud + ':WidgetTree.HudCanvas'}
+    # Same slot as the analysis panel (top-centre, y 167, 1217 x 798).
+    panel_layout = getp(getp({'refPath': hud + ':WidgetTree.AnalysisPanel'}, ['Slot'])['Slot'], ['LayoutData'])['LayoutData']
+
+    def add(cls, name, parent, idx=-1):
+        info = call(U + 'AddWidget', {'widgetBlueprint': {'refPath': hud}, 'widgetClass': {'refPath': '/Script/UMG.' + cls},
+                                      'widgetDisplayName': name, 'parentWidget': parent, 'childIndex': idx})['returnValue']
+        if not info or not info.get('widget'):
+            raise RuntimeError('add failed ' + name)
+        return info
+
+    # HudCanvas order: Timeline, AnalysisPanel, [4 panels], [close X], ChevronGroup, NavBar, TitleBar.
+    for i, name in enumerate(TAB_PANELS):
+        info = add('Border', name, canvas, 2 + i)
+        setp(info['slot'], {'LayoutData': panel_layout, 'bAutoSize': False, 'ZOrder': 0})
+        b = getp(info['widget'], ['Background'])['Background']
+        setp(info['widget'], {'Background': brush_patch(b, 'RoundedBox', None, None, ('000000', 0.62), (29,) * 4),
+                              'BrushColor': {'r': 1, 'g': 1, 'b': 1, 'a': 1},
+                              'Padding': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+                              'Visibility': 'Collapsed'})
+        add('CanvasPanel', name.replace('Panel', 'Content'), info['widget'])     # empty: the tab's content goes here
+
+    info = add('Button', 'PanelCloseButton', canvas, 2 + len(TAB_PANELS))
+    half_w = panel_layout['offsets']['right'] / 2.0                             # 608.5
+    top = panel_layout['offsets']['top']                                       # 167
+    setp(info['slot'], {'LayoutData': {'offsets': {'left': half_w - 8.5, 'top': top + 8.5, 'right': CLOSE_SIZE, 'bottom': CLOSE_SIZE},
+                                       'anchors': {'minimum': {'x': 0.5, 'y': 0}, 'maximum': {'x': 0.5, 'y': 0}},
+                                       'alignment': {'x': 0.5, 'y': 0.5}}, 'bAutoSize': False, 'ZOrder': 0})
+    st = getp(info['widget'], ['WidgetStyle'])['WidgetStyle']
+    for key, look in zip(['normal', 'hovered', 'pressed'], CLOSE_BTN):
+        st[key] = brush_patch(st[key], *look[0], **look[1])
+    st['disabled'] = brush_patch(st['disabled'], 'NoDrawType')
+    st['normalPadding'] = {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+    st['pressedPadding'] = {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+    setp(info['widget'], {'WidgetStyle': st, 'IsFocusable': False, 'ToolTipText': 'Close',
+                          'BackgroundColor': {'r': 1, 'g': 1, 'b': 1, 'a': 1}, 'Visibility': 'Collapsed'})
+    icon = add('Image', 'PanelCloseIcon', info['widget'])
+    b = getp(icon['widget'], ['Brush'])['Brush']
+    setp(icon['widget'], {'Brush': brush_patch(b, 'Image', 'T_IHPC_Close', (16, 16)), 'Visibility': 'HitTestInvisible'})
+    setp(icon['slot'], {'Padding': {'left': 0, 'top': 0, 'right': 0, 'bottom': 0},
+                        'HorizontalAlignment': 'HAlign_Center', 'VerticalAlignment': 'VAlign_Center'})
+
+    ok = call(U + 'CompileWidgetBlueprint', {'widgetBlueprint': {'refPath': hud}})['returnValue']
+    return {'compiled': ok, 'saved': call(A + 'save_assets', {'asset_paths': [WIDGETS + 'WBP_IHPC_HUD']})['returnValue']}
+
+
 def run():
     """Build order matters: children before the widgets that contain them."""
     return {
@@ -674,4 +737,5 @@ def run():
         'LayerSwitcher': build_layer_switcher(),
         'LayerSwitcherInGame': use_layer_switcher_instead_of_placeholder(),
         'HideSkeletonBadge': hide_skeleton_badge(),
+        'TabPanelsAndClose': add_tab_panels_and_close_button(),
     }

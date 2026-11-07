@@ -397,6 +397,22 @@ def make_layer_switcher_assets():
 
 
 # ---------------------------------------------------------------------------
+# 10. Close "X" for the tab panels (not in Figma - drawn in the same style as the header chevron)
+# ---------------------------------------------------------------------------
+
+def make_close_icon():
+    """White X, 16 x 16 Figma px, stroke 2.6 with round caps (same rounded-stroke look as the
+    header chevron / zoom icon). Sits on a navy circle button drawn by Unreal."""
+    w = h = 16.0
+    img, k = new_canvas(w, h)
+    d = ImageDraw.Draw(img)
+    m = 2.6 / 2 + 0.5                       # keep the round caps inside the canvas
+    stroke_polyline(d, [(m, m), (w - m, h - m)], k, 2.6, rgba("#FFFFFF"))
+    stroke_polyline(d, [(w - m, m), (m, h - m)], k, 2.6, rgba("#FFFFFF"))
+    finish(img, w, h, "T_IHPC_Close.png")
+
+
+# ---------------------------------------------------------------------------
 # 9. Clean edges: "bleed" the colour into the invisible pixels (runs on every PNG at the end)
 # ---------------------------------------------------------------------------
 # A fully transparent pixel still stores a colour. Figma exports store WHITE there (our drawn icons store black).
@@ -457,6 +473,7 @@ def main():
     make_title_glow()
     make_drop_shadow()
     make_video_card_background()
+    make_close_icon()
     bleed_all_outputs()        # must be last: fixes the edges of every texture made above
 
 

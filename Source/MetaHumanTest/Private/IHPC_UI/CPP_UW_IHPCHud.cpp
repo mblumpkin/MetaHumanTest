@@ -65,6 +65,10 @@ void UCPP_UW_IHPCHud::NativeConstruct()
 			Tab->OnTabClicked.AddUniqueDynamic(this, &UCPP_UW_IHPCHud::HandleTabClicked);
 		}
 	}
+	if (PanelCloseButton)
+	{
+		PanelCloseButton->OnClicked.AddUniqueDynamic(this, &UCPP_UW_IHPCHud::HandlePanelCloseClicked);
+	}
 
 	// Timeline bar: its orange markers start as the saved videos; new recordings / bookmarks
 	// made on the timeline are added to the analysis panel's lists.
@@ -138,7 +142,7 @@ void UCPP_UW_IHPCHud::RefreshChevron()
 }
 
 // ============================================================================
-// Tabs + analysis panel
+// Tabs + panels (analysis panel for Saved Videos, empty panels for the other tabs) + close "X"
 // ============================================================================
 
 void UCPP_UW_IHPCHud::HandleTabClicked(EIHPCNavTab Tab)
@@ -158,14 +162,55 @@ void UCPP_UW_IHPCHud::SelectTab(EIHPCNavTab Tab)
 		}
 	}
 
-	const bool bOpenPanel = (Tab != EIHPCNavTab::None && Tab == AnalysisPanelTab);
-	SetAnalysisPanelOpen(bOpenPanel);
-	if (bOpenPanel)
+	RefreshPanels();
+	if (GetPanelForTab(Tab))
 	{
-		SetNavBarOpen(false);   // Figma frame 5: panel open, nav bar closed
+		SetNavBarOpen(false);   // Figma frame 5: panel open, nav bar closed (it would cover the panel's top)
 	}
 
 	OnTabChanged.Broadcast(Tab);
+}
+
+UWidget* UCPP_UW_IHPCHud::GetPanelForTab(EIHPCNavTab Tab) const
+{
+	if (Tab == EIHPCNavTab::None)
+	{
+		return nullptr;
+	}
+	if (Tab == AnalysisPanelTab)
+	{
+		return AnalysisPanel;
+	}
+	switch (Tab)
+	{
+	case EIHPCNavTab::Profile:         return ProfilePanel;
+	case EIHPCNavTab::Progress:        return ProgressPanel;
+	case EIHPCNavTab::HistoryTimeline: return HistoryTimelinePanel;
+	case EIHPCNavTab::Settings:        return SettingsPanel;
+	default:                           return nullptr;   // Saved Videos when it is not the AnalysisPanelTab
+	}
+}
+
+void UCPP_UW_IHPCHud::RefreshPanels()
+{
+	UWidget* OpenPanel = GetPanelForTab(SelectedTab);
+	for (UWidget* Panel : TArray<UWidget*>{ AnalysisPanel, ProfilePanel, ProgressPanel, HistoryTimelinePanel, SettingsPanel })
+	{
+		if (Panel)
+		{
+			// Visible (not just drawn): an open panel blocks clicks from reaching the 3D view behind it.
+			Panel->SetVisibility(Panel == OpenPanel ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		}
+	}
+	if (PanelCloseButton)
+	{
+		PanelCloseButton->SetVisibility(OpenPanel ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UCPP_UW_IHPCHud::HandlePanelCloseClicked()
+{
+	ClosePanel();
 }
 
 void UCPP_UW_IHPCHud::SetAnalysisPanelOpen(bool bOpen)
@@ -173,6 +218,10 @@ void UCPP_UW_IHPCHud::SetAnalysisPanelOpen(bool bOpen)
 	if (AnalysisPanel)
 	{
 		AnalysisPanel->SetVisibility(bOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+	if (PanelCloseButton)
+	{
+		PanelCloseButton->SetVisibility(GetPanelForTab(SelectedTab) || bOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 }
 

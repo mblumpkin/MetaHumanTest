@@ -15,8 +15,11 @@
 //   * "Saved Videos" opens the analysis panel (Figma frame 5) and closes the nav bar,
 //     because that frame shows the panel with the nav bar closed. Change AnalysisPanelTab
 //     to make a different tab open the panel.
-//   * Profile / Progress / History & Timeline / Settings have no screens in the Figma
-//     components yet: they highlight and fire OnTabChanged so screens can be added later.
+//   * Profile / Progress / History & Timeline / Settings each open their own EMPTY panel with the
+//     same look as the analysis panel's background (Figma frame 5 "Rectangle 26": black 62 %,
+//     radius 29, 1217 x 798). Their content is not designed yet; add it inside the panels.
+//   * Close "X" (PanelCloseButton): a round button on the top-right corner of whichever panel is
+//     open. Clicking it closes the panel and unselects the tab (same as clicking the tab again).
 //
 // Clicks on empty parts of the HUD pass straight through to the 3D view, so the
 // existing mouse orbit / pan / zoom keeps working.
@@ -105,6 +108,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "IHPC|HUD")
 	void SetAnalysisPanelOpen(bool bOpen);
 
+	/** Closes whichever tab panel is open and unselects its tab (what the close "X" does). */
+	UFUNCTION(BlueprintCallable, Category = "IHPC|HUD")
+	void ClosePanel() { SelectTab(EIHPCNavTab::None); }
+
+	/** The panel a tab opens: the analysis panel for AnalysisPanelTab, otherwise ProfilePanel /
+	 *  ProgressPanel / HistoryTimelinePanel / SettingsPanel. Null for None or a missing panel. */
+	UFUNCTION(BlueprintPure, Category = "IHPC|HUD")
+	UWidget* GetPanelForTab(EIHPCNavTab Tab) const;
+
+	UFUNCTION(BlueprintPure, Category = "IHPC|HUD")
+	bool IsAnyPanelOpen() const { return GetPanelForTab(SelectedTab) != nullptr; }
+
 protected:
 	virtual void NativePreConstruct() override;
 	virtual void NativeConstruct() override;
@@ -126,6 +141,15 @@ protected:
 
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UCPP_UW_IHPCAnalysisPanel> AnalysisPanel;
 
+	/** Empty panels for the other tabs, styled like Figma frame 5 "Rectangle 26". Put each tab's content inside. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> ProfilePanel;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> ProgressPanel;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> HistoryTimelinePanel;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> SettingsPanel;
+
+	/** Round "X" on the top-right corner of the open panel. Shown only while a panel is open. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UButton> PanelCloseButton;
+
 	/** Playback / timeline bar at the bottom (Figma "ihpc ui (1)ee 1"). Replaces the old prototype timeline. */
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UCPP_UW_IHPCTimeline> Timeline;
 
@@ -134,6 +158,10 @@ private:
 	UFUNCTION() void HandleTabClicked(EIHPCNavTab Tab);
 	UFUNCTION() void HandleRecordingSaved(const FIHPCTaggedMoment& Moment);
 	UFUNCTION() void HandleBookmarkAdded(const FIHPCTaggedMoment& Moment);
+	UFUNCTION() void HandlePanelCloseClicked();
+
+	/** Shows the panel of the selected tab, hides the others, shows / hides the close "X". */
+	void RefreshPanels();
 
 	/** Updates the circle colour, arrow picture and position for the current open/closed state. */
 	void RefreshChevron();
