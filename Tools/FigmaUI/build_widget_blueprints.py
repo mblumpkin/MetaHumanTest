@@ -2,7 +2,7 @@
 build_widget_blueprints.py
 ==========================
 
-RECORD of how the 8 IHPC Widget Blueprints were built (2026-11-07).
+RECORD of how the IHPC Widget Blueprints were built (2026-11-07).
 
 These are the exact steps that were sent to the Unreal Editor through the
 Unreal MCP "ProgrammaticToolset" (execute_tool_script). It is kept here so the
@@ -575,6 +575,78 @@ def hook_hud_into_player_controller():
     return call(A + 'save_assets', {'asset_paths': ['/Game/Blueprints/BP_PlayerController', '/Game/Main']})['returnValue']
 
 
+# ---------------------------------------------------------------------------
+# 10. WBP_IHPC_LayerSwitcher (Figma "ihpc ui rttd 2" + "Rectangle 24", frame 1, bottom right)
+# ---------------------------------------------------------------------------
+# Figma frame 1 (1366 x 1024): pill "Rectangle 24" 204 x 65 at (1114, 914); the 186 x 70 button picture
+# at (1123, 913). Circle centres in the pill: x 43.45 / 102.33 / 161.2, y 32.69. The textures are 214 px
+# crops of the 4.586x picture, so they are drawn at 214 / 4.586 = 46.66 px (circle = 46 px, like Figma).
+LS_BUTTON = 46.66
+LAYER_BUTTONS = [  # widget name, top-left x, y inside the pill, tooltip
+    ('BodyLayer_Btn',     43.45 - LS_BUTTON / 2, 32.69 - LS_BUTTON / 2, 'Body'),
+    ('MusclesLayer_Btn', 102.33 - LS_BUTTON / 2, 32.69 - LS_BUTTON / 2, 'Muscles'),
+    ('SkeletonLayer_Btn', 161.2 - LS_BUTTON / 2, 32.69 - LS_BUTTON / 2, 'Skeleton'),
+]
+PLACEHOLDER_SWITCHER = '/Game/Widget/WB_AnatomyViewSwitcher.Default__WB_AnatomyViewSwitcher_C'
+
+
+def build_layer_switcher():
+    t = BP('WBP_IHPC_LayerSwitcher', '/Script/MetaHumanTest.CPP_UW_IHPCLayerSwitcher')
+    # Full-screen root that lets clicks through everywhere except on the switcher itself.
+    t.add('CanvasPanel', 'LayerRoot'); t.vis('LayerRoot', 'SelfHitTestInvisible')
+
+    # The switcher: bottom-centre anchor, its centre 533 px right of the screen centre, bottom 45 px above the
+    # screen bottom (Figma: pill centre x 1216 = 683 + 533, bottom 979 = 1024 - 45). Move it by moving this one.
+    t.add('CanvasPanel', 'LayerSwitcher', 'LayerRoot'); t.vis('LayerSwitcher', 'SelfHitTestInvisible')
+    t.canvas('LayerSwitcher', 533, -45, 204, 65, (0.5, 1, 0.5, 1), (0.5, 1))
+
+    # "Rectangle 24": #1D3C55 at 26 %, fully rounded. Visible = clicks between the buttons don't reach the 3D view.
+    t.add('Image', 'Pill', 'LayerSwitcher'); t.canvas('Pill', 0, 0, 204, 65)
+    t.image('Pill', 'RoundedBox', None, (204, 65), ('1D3C55', 0.26), (32.5,) * 4)
+
+    # The three buttons. Their pictures are set by C++ (selected / unselected), also in the designer.
+    for name, x, y, tip in LAYER_BUTTONS:
+        t.add('Button', name, 'LayerSwitcher'); t.canvas(name, x, y, LS_BUTTON, LS_BUTTON)
+        setp(t.W(name), {'IsFocusable': False, 'ToolTipText': tip})
+
+    # Orange badge on the skeleton button: white ring 16.8 px, centre (176.9, 16.55) in the pill. Added last = on top.
+    t.add('Image', 'SkeletonBadge', 'LayerSwitcher'); t.canvas('SkeletonBadge', 176.9 - 8.4, 16.55 - 8.4, 16.8, 16.8)
+    t.image('SkeletonBadge', 'Image', 'T_IHPC_LS_Badge', (16.8, 16.8)); t.vis('SkeletonBadge', 'HitTestInvisible')
+
+    # The parent class (teammate's UCPP_UW_AnatomyViewSwitcher) needs these two by name. They stay hidden:
+    # the new buttons drive the slider from C++, exactly like dragging the old placeholder slider.
+    t.add('Button', 'AnatomyMetaHuman_Btn', 'LayerRoot'); t.vis('AnatomyMetaHuman_Btn', 'Collapsed')
+    t.add('Slider', 'AnatomyViewSwitcher_Slider', 'LayerRoot'); t.vis('AnatomyViewSwitcher_Slider', 'Collapsed')
+    setp(t.W('AnatomyViewSwitcher_Slider'), {'MinValue': 0, 'MaxValue': 1, 'Value': 1})
+
+    # Hair / spawn settings copied from the placeholder so the parent code behaves the same.
+    old = getp({'refPath': PLACEHOLDER_SWITCHER}, ['GroomStrandsAsset', 'GroomCardsAsset', 'PawnToSpawn'])
+    defaults = dict(old)
+    defaults.update({
+        'BodySelectedTexture': tex('T_IHPC_LS_Body_On'), 'BodyUnselectedTexture': tex('T_IHPC_LS_Body_Off'),
+        'MusclesSelectedTexture': tex('T_IHPC_LS_Muscles_On'), 'MusclesUnselectedTexture': tex('T_IHPC_LS_Muscles_Off'),
+        'SkeletonSelectedTexture': tex('T_IHPC_LS_Skeleton_On'), 'SkeletonUnselectedTexture': tex('T_IHPC_LS_Skeleton_Off'),
+        'ButtonSize': {'x': LS_BUTTON, 'y': LS_BUTTON},
+    })
+    return t.finish(defaults)
+
+
+def use_layer_switcher_instead_of_placeholder():
+    """BP_PlayerController creates the new switcher instead of WB_AnatomyViewSwitcher (same property, so the
+    controller code is unchanged), and the timeline moves left of centre like Figma so the two sit side by side."""
+    pc = {'refPath': '/Game/Blueprints/BP_PlayerController.Default__BP_PlayerController_C'}
+    setp(pc, {'AnatomyViewSwitcherWidgetClass': {'refPath': WIDGETS + 'WBP_IHPC_LayerSwitcher.WBP_IHPC_LayerSwitcher_C'}})
+    # Figma frame 1: timeline x 34..1082 -> centre 558 = 683 - 125. Its right end then stops 32 px before the pill.
+    hud = '/Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD.WBP_IHPC_HUD'
+    slot = getp({'refPath': hud + ':WidgetTree.Timeline'}, ['Slot'])['Slot']
+    setp(slot, {'LayoutData': {'offsets': {'left': -125, 'top': -28, 'right': 1048, 'bottom': 102},
+                               'anchors': {'minimum': {'x': 0.5, 'y': 1}, 'maximum': {'x': 0.5, 'y': 1}},
+                               'alignment': {'x': 0.5, 'y': 1}}})
+    call(U + 'CompileWidgetBlueprint', {'widgetBlueprint': {'refPath': hud}})
+    return call(A + 'save_assets', {'asset_paths': ['/Game/Blueprints/BP_PlayerController',
+                                                    '/Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD']})['returnValue']
+
+
 def run():
     """Build order matters: children before the widgets that contain them."""
     return {
@@ -588,4 +660,6 @@ def run():
         'Timeline': build_timeline(),
         'TimelineInHud': add_timeline_to_hud_and_retire_prototype(),
         'HudFromPlayerController': hook_hud_into_player_controller(),
+        'LayerSwitcher': build_layer_switcher(),
+        'LayerSwitcherInGame': use_layer_switcher_instead_of_placeholder(),
     }

@@ -6,6 +6,7 @@
 // Nothing in this file draws anything. It only describes the DATA the widgets
 // pass around, so every widget agrees on the same shapes:
 //   * EIHPCNavTab          - the five tabs in the drop-down nav bar
+//   * EIHPCAnatomyLayer    - the three buttons of the layer switcher (Body / Muscles / Skeleton)
 //   * EIHPCAccordionSection- the three sections of the graph accordion
 //   * FIHPCTaggedMoment    - one saved video / tagged point (a video card)
 //   * FIHPCGraphSeries     - one coloured line in a line graph
@@ -27,6 +28,15 @@ enum class EIHPCNavTab : uint8
 	SavedVideos     UMETA(DisplayName = "Saved Videos"),
 	HistoryTimeline UMETA(DisplayName = "History & Timeline"),
 	Settings        UMETA(DisplayName = "Settings")
+};
+
+/** The three round buttons of the layer switcher (Figma "ihpc ui rttd 2"): which part of the avatar is shown. */
+UENUM(BlueprintType)
+enum class EIHPCAnatomyLayer : uint8
+{
+	Body     UMETA(DisplayName = "Body (layers icon)"),
+	Muscles  UMETA(DisplayName = "Muscles"),
+	Skeleton UMETA(DisplayName = "Skeleton")
 };
 
 /** The sections of the graph accordion (Figma "Component 3"). Only one can be open at a time. */
