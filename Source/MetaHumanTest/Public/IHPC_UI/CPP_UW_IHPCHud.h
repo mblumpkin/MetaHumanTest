@@ -22,7 +22,8 @@
 // existing mouse orbit / pan / zoom keeps working.
 //
 // Widget Blueprint: /Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD
-// Created by the Main level's Level Blueprint (BeginPlay -> Create Widget -> Add to Viewport).
+// Created by ACPP_PlayerController::BeginPlay (MainHUDWidgetClass, set in BP_PlayerController),
+// the same way as the anatomy switcher and pawn switcher, and drawn above them (Z-order 10).
 // -----------------------------------------------------------------------------
 
 #pragma once
