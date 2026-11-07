@@ -50,4 +50,4 @@ Repo: <https://github.com/mblumpkin/MetaHumanTest>
 |---|---|---|---|
 | 28 | 2026-11-07 | [`71c391c`](https://github.com/mblumpkin/MetaHumanTest/commit/71c391c) | C++: `CPP_UW_IHPCHud` gets `ProfilePanel` / `ProgressPanel` / `HistoryTimelinePanel` / `SettingsPanel` + `PanelCloseButton`, `GetPanelForTab`, `RefreshPanels`, `ClosePanel`; `make_close_icon()` → `T_IHPC_Close.png`; build step recorded. |
 | 29 | 2026-11-07 | [`cc61a4d`](https://github.com/mblumpkin/MetaHumanTest/commit/cc61a4d) | Built (*Succeeded*); `T_IHPC_Close` imported; 4 "Rectangle 26" panels + the X added to `WBP_IHPC_HUD`. Tested: Saved Videos / Profile open, X closes them. |
-| 30 | 2026-11-07 | *(this commit)* | README pages updated for the X and the tab panels; screenshots. |
+| 30 | 2026-11-07 | [`0fff9be`](https://github.com/mblumpkin/MetaHumanTest/commit/0fff9be) | README pages updated for the X and the tab panels; screenshots; [issue #4](https://github.com/mblumpkin/MetaHumanTest/issues/4) created. |
