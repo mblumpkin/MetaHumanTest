@@ -281,8 +281,124 @@ def make_timeline_assets():
     finish(img, 19, 19, "T_IHPC_TL_Marker.png")
 
 
+# ---------------------------------------------------------------------------
+# 8. Layer switcher / opacity buttons (Figma layers "ihpc ui rttd 2" + "Rectangle 24" on frame "iPad Pro 12.9" - 1")
+# ---------------------------------------------------------------------------
+# layers_f1_raw_1.png = the original picture used on frame 1 (Body selected),
+# layers_f4_raw_1.png = the same component on frame 4 (Muscles selected).
+# Both are 853 x 320 = 4.586x the 186 x 70 Figma layer. Each circle is 46 Figma px across.
+# Nobody drew "Skeleton selected" in Figma, so it is built here from the other pictures.
+# "Rectangle 24" (the pill behind the buttons) is a plain colour (#1D3C55 at 26 %, corner radius 35.5),
+# so Unreal draws it as a rounded box - no texture needed.
+
+LAYER_CIRCLE_X = {"Body": 158, "Muscles": 428, "Skeleton": 698}   # circle centres (x) in the 4.586x picture
+LAYER_CIRCLE_TOP = 48            # crop rows 48..261 -> circle centre y = 155 (measured: circle spans y 50..259)
+LAYER_CROP = 214                 # crop size (the circle is 211 px across, plus a 1-2 px margin)
+LAYER_BADGE = (770.0, 80.5, 40.5)  # orange badge on the skeleton circle: centre x, y and radius incl. white ring + edge
+LAYER_OFF_BG_BLUE = 227          # blue channel of the flat light-blue inside of an unselected circle (175, 203, 227)
+LAYER_ICON_BLUE = 85             # blue channel of the navy icon lines on an unselected circle (24, 60, 85)
+
+
+def _layer_crop(picture, name):
+    x = LAYER_CIRCLE_X[name] - LAYER_CROP // 2
+    return picture[LAYER_CIRCLE_TOP:LAYER_CIRCLE_TOP + LAYER_CROP, x:x + LAYER_CROP].copy()
+
+
+def _save_rgba(arr, name):
+    path = os.path.join(OUT, name)
+    Image.fromarray(np.clip(np.round(arr), 0, 255).astype(np.uint8)).save(path)
+    print("wrote", os.path.relpath(path, ROOT), (arr.shape[1], arr.shape[0]))
+
+
+def _diffuse_fill(img, mask, iterations=600):
+    """Fills the masked pixels by repeatedly averaging their 4 neighbours. On a smooth gradient
+    (the inside of the selected circle) this paints over thin lines without leaving a trace."""
+    out = img.copy()
+    out[mask] = img[~mask].mean(axis=0)
+    for _ in range(iterations):
+        avg = (np.roll(out, 1, 0) + np.roll(out, -1, 0) + np.roll(out, 1, 1) + np.roll(out, -1, 1)) / 4.0
+        out[mask] = avg[mask]
+    return out
+
+
+def _icon_alpha(unselected_crop):
+    """How much of each pixel is icon (0..1), read from an UNSELECTED circle: there the icon is navy
+    lines on a flat light-blue fill, so the blue channel tells how much icon covers the pixel."""
+    n = unselected_crop.shape[0]
+    yy, xx = np.mgrid[0:n, 0:n]
+    inside = np.hypot(xx + 0.5 - n / 2, yy + 0.5 - n / 2) < 85     # inside the inner ring only
+    alpha = (LAYER_OFF_BG_BLUE - unselected_crop[..., 2]) / float(LAYER_OFF_BG_BLUE - LAYER_ICON_BLUE)
+    return np.clip(alpha, 0.0, 1.0) * inside
+
+
+def _grow(mask, pixels):
+    """Make a yes/no mask a few pixels bigger (so anti-aliased edges are included)."""
+    out = mask.copy()
+    for _ in range(pixels):
+        out = out | np.roll(out, 1, 0) | np.roll(out, -1, 0) | np.roll(out, 1, 1) | np.roll(out, -1, 1)
+    return out
+
+
+def make_layer_switcher_assets():
+    """Six circle buttons (Body / Muscles / Skeleton, each selected = '_On' and unselected = '_Off')
+    and the orange badge, as separate textures so Unreal can swap them when a layer is picked."""
+    f1 = np.array(Image.open(os.path.join(SRC, "layers_f1_raw_1.png")).convert("RGBA")).astype(np.float32)
+    f4 = np.array(Image.open(os.path.join(SRC, "layers_f4_raw_1.png")).convert("RGBA")).astype(np.float32)
+
+    body_on, body_off = _layer_crop(f1, "Body"), _layer_crop(f4, "Body")
+    muscles_on, muscles_off = _layer_crop(f4, "Muscles"), _layer_crop(f1, "Muscles")
+    skeleton_off = _layer_crop(f1, "Skeleton")
+
+    # 1. Skeleton (unselected) without the badge: the badge sits on the top-right of the rim, so those
+    #    pixels are borrowed from another unselected circle (the rims are identical). The badge becomes
+    #    its own widget, so it can be shown / hidden (e.g. "something new to look at").
+    n = LAYER_CROP
+    yy, xx = np.mgrid[0:n, 0:n]
+    bx = LAYER_BADGE[0] - (LAYER_CIRCLE_X["Skeleton"] - n // 2)
+    by = LAYER_BADGE[1] - LAYER_CIRCLE_TOP
+    under_badge = np.hypot(xx + 0.5 - bx, yy + 0.5 - by) < LAYER_BADGE[2]
+    skeleton_lines = (skeleton_off[..., 2] < 200) & (skeleton_off[..., 0] < 120) & (skeleton_off[..., 3] > 200)
+    replace = under_badge & ~_grow(skeleton_lines, 2)
+    skeleton_off[replace] = body_off[replace]
+
+    # 2. An empty "selected" circle: the body and muscles icons are in different places, so where one
+    #    circle has icon lines the other usually has clean background. Where both have lines,
+    #    the gap is painted over from the surrounding gradient.
+    body_lines = _grow(_icon_alpha(body_off) > 0.02, 3)
+    muscle_lines = _grow(_icon_alpha(muscles_off) > 0.02, 3)
+    empty_on = body_on.copy()
+    empty_on[body_lines] = muscles_on[body_lines]
+    empty_on = _diffuse_fill(empty_on, body_lines & muscle_lines)
+
+    # 3. Selected = white icon on the dark glossy circle. The icon shape comes from the unselected picture.
+    def selected_from(unselected):
+        a = _icon_alpha(unselected)[..., None]
+        out = empty_on.copy()
+        out[..., :3] = empty_on[..., :3] * (1 - a) + 255.0 * a
+        return out
+
+    skeleton_on = selected_from(skeleton_off)
+
+    # Check: rebuilding "Body selected" the same way should match Figma's real one.
+    diff = np.abs(selected_from(body_off)[..., :3] - body_on[..., :3])
+    print("layer switcher: rebuilt Body_On vs Figma, mean difference %.2f / 255" % diff.mean())
+
+    for name, arr in [("Body_On", body_on), ("Body_Off", body_off),
+                      ("Muscles_On", muscles_on), ("Muscles_Off", muscles_off),
+                      ("Skeleton_On", skeleton_on), ("Skeleton_Off", skeleton_off)]:
+        _save_rgba(arr, "T_IHPC_LS_%s.png" % name)
+
+    # 4. Badge: white ring 16.8 px across with an orange (#EB8D71) dot 13.1 px across (Figma px).
+    img, k = new_canvas(16.8, 16.8)
+    img = layer(img, lambda d: d.ellipse([0, 0, 16.8 * k, 16.8 * k], fill=rgba("#FFFFFF")))
+    o = (16.8 - 13.1) / 2
+    img = layer(img, lambda d: d.ellipse([o * k, o * k, (16.8 - o) * k, (16.8 - o) * k], fill=rgba("#EB8D71")))
+    finish(img, 16.8, 16.8, "T_IHPC_LS_Badge.png")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    make_layer_switcher_assets()
     make_timeline_assets()
     make_toggle("T_IHPC_Toggle_Off.png", "#D9D9D9", 0.20, 10.5, 0.65)
     make_toggle("T_IHPC_Toggle_On.png", "#B3CA7F", 0.76, 27.5, 0.75)
