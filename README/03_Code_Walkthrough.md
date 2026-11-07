@@ -18,6 +18,7 @@ pieces depend on each other. Line links point at the version on GitHub.
 - [CPP_UW_IHPCAnalysisPanel — the panel](#cpp_uw_ihpcanalysispanel--the-panel)
 - [CPP_UW_IHPCHud — title bar, menu, tabs](#cpp_uw_ihpchud--title-bar-menu-tabs)
 - [CPP_UW_IHPCTimeline — playback / timeline bar](#cpp_uw_ihpctimeline--playback--timeline-bar) *(added in step 2)*
+- [CPP_PlayerController — creates the HUD](#cpp_playercontroller--creates-the-hud) *(existing file, small addition)*
 - [What happens when you click…](#what-happens-when-you-click)
 
 ---
@@ -444,7 +445,34 @@ Events: `OnRecordingSaved`, `OnBookmarkAdded`, `OnMarkerClicked`, `OnSpeedChange
 
 ---
 
+## CPP_PlayerController — creates the HUD
+
+Existing project file ([header](../Source/MetaHumanTest/CPP_PlayerController.h) · [code](../Source/MetaHumanTest/CPP_PlayerController.cpp)); only these lines were
+added, following the same pattern as the anatomy switcher and pawn switcher:
+
+* [`#include "IHPC_UI/CPP_UW_IHPCHud.h"`](../Source/MetaHumanTest/CPP_PlayerController.h#L11) — so the controller knows the HUD class.
+* [`MainHUDWidgetClass`](../Source/MetaHumanTest/CPP_PlayerController.h#L82-L85) — `TSubclassOf<UCPP_UW_IHPCHud>`, *EditAnywhere*: the Widget
+  Blueprint to create. Set to `WBP_IHPC_HUD` in `BP_PlayerController` → Class Defaults → *UI*.
+* [`MainHUDZOrder`](../Source/MetaHumanTest/CPP_PlayerController.h#L87-L89) — draw order, default **10** so the HUD is above the other widgets
+  (they are added with the default 0).
+* [`GetMainHUD()`](../Source/MetaHumanTest/CPP_PlayerController.h#L91-L94) — *BlueprintPure* getter for the created HUD, so the controller or a
+  Blueprint can reach it later (e.g. `GetMainHUD()->SelectTab(EIHPCNavTab::SavedVideos)` from a key press).
+* [`MainHUDWidget`](../Source/MetaHumanTest/CPP_PlayerController.h#L115-L117) — private `UPROPERTY()` pointer to the instance (the `UPROPERTY`
+  keeps it from being garbage-collected).
+* [In `BeginPlay`](../Source/MetaHumanTest/CPP_PlayerController.cpp#L85-L94) — right after the pawn switcher: if a class is set,
+  `CreateWidget<UCPP_UW_IHPCHud>(this, MainHUDWidgetClass)` (owner = this controller) and
+  `AddToViewport(MainHUDZOrder)`.
+
+Because the controller is the owner, `GetOwningPlayer()` inside the HUD widgets is this controller.
+
+---
+
 ## What happens when you click…
+
+**Pressing Play in the editor (start-up)**
+`ACPP_PlayerController::BeginPlay` → creates the anatomy switcher and pawn switcher → creates `WBP_IHPC_HUD`
+(`MainHUDWidgetClass`) and adds it at Z-order 10 → the HUD's `NativeConstruct` binds the chevron, tabs and timeline, gives
+the timeline its markers (the saved videos) and starts with the menu closed and the panel hidden.
 
 **The round arrow**
 `ChevronButton.OnClicked` → `UCPP_UW_IHPCHud::HandleChevronClicked` → `ToggleNavBar` → `SetNavBarOpen(true)` → `NavBar`

@@ -47,9 +47,12 @@ colour and font — is kept in [`Tools/FigmaUI/build_widget_blueprints.py`](../T
 Build order: ToggleSwitch, NavTab, VideoCard → VideosRow → GraphAccordion → AnalysisPanel → HUD (each one uses the ones
 before it).
 
-## 7. Hook into the level
-`Main` Level Blueprint: the existing *Create Widget* node's class was changed from `WBP_Header` to `WBP_IHPC_HUD`, and the
-*Add to Viewport* Z-order set to 10 (draws above the existing timeline/anatomy widgets).
+## 7. Hook into the game
+*Step 1:* the `Main` Level Blueprint's *Create Widget* node was pointed at `WBP_IHPC_HUD` (Z-order 10).
+*Later (to keep the project's original organisation):* the HUD moved to **`CPP_PlayerController`** — new
+`MainHUDWidgetClass` / `MainHUDZOrder` / `GetMainHUD()`, created in `BeginPlay` with the controller as owner right after
+the anatomy and pawn switchers; `BP_PlayerController` → *Main HUD Widget Class* = `WBP_IHPC_HUD`; the Level Blueprint's
+Create Widget / Add to Viewport nodes were deleted (Begin Play is empty again).
 
 ## 8. Test in Play-In-Editor
 Clicked through every control (menu, tabs, accordion, switches, download, zoom, inspect, cards, tagged points) and

@@ -558,6 +558,19 @@ def add_timeline_to_hud_and_retire_prototype():
                                                     '/Game/Blueprints/BP_PlayerController']})['returnValue']
 
 
+def hook_hud_into_player_controller():
+    """Later change (keeps the project's original organisation): the HUD is created by CPP_PlayerController
+    (MainHUDWidgetClass, C++) instead of the Main Level Blueprint. Needs the C++ change built first."""
+    pc = {'refPath': '/Game/Blueprints/BP_PlayerController.Default__BP_PlayerController_C'}
+    setp(pc, {'MainHUDWidgetClass': {'refPath': WIDGETS + 'WBP_IHPC_HUD.WBP_IHPC_HUD_C'}})   # MainHUDZOrder stays 10
+    B = 'editor_toolset.toolsets.blueprint.BlueprintTools.'
+    graph = '/Game/Main.Main:PersistentLevel.Main.EventGraph'
+    for node in ['K2Node_CallFunction_0', 'K2Node_CreateWidget_0']:   # Add to Viewport + Create Widget (WBP_IHPC_HUD)
+        call(B + 'delete_node', {'node': {'refPath': graph + '.' + node}})
+    call(B + 'compile_blueprint', {'blueprint': {'refPath': '/Game/Main.Main:PersistentLevel.Main'}, 'warnings_as_errors': False})
+    return call(A + 'save_assets', {'asset_paths': ['/Game/Blueprints/BP_PlayerController', '/Game/Main']})['returnValue']
+
+
 def run():
     """Build order matters: children before the widgets that contain them."""
     return {
@@ -570,4 +583,5 @@ def run():
         'HUD': build_hud(),
         'Timeline': build_timeline(),
         'TimelineInHud': add_timeline_to_hud_and_retire_prototype(),
+        'HudFromPlayerController': hook_hud_into_player_controller(),
     }

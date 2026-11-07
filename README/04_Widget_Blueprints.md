@@ -12,7 +12,8 @@ Details panel when nothing is selected) hold the textures/fonts listed at the bo
 ---
 
 ## WBP_IHPC_HUD — parent `CPP_UW_IHPCHud`
-Full screen. Created by the **Main** level's Level Blueprint (Begin Play → Create Widget → Add to Viewport, Z-order 10).
+Full screen. Created by **`CPP_PlayerController::BeginPlay`** from `BP_PlayerController` → *Main HUD Widget Class*
+(owner = the player controller, Z-order = *Main HUD Z Order*, 10), like the anatomy switcher and pawn switcher.
 
 ```
 HudCanvas (Canvas Panel, not hit-testable itself)

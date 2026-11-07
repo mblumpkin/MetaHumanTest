@@ -103,6 +103,7 @@ the project if you want them back ([05](05_How_To_Change_Things.md)).
 * Clicking a card, tagged point or marker, and every timeline button, use the project's existing
   **`UAnimationTimelineComp`** on the player's pawn (`PlayForward`, `Pause`, `SetNormalizedTime`, `PlaySpeed`) — the same
   component the old prototype timeline used.
-* Existing assets changed: the **Level Blueprint** of `Main` creates the new HUD instead of `WBP_Header`;
-  **`BP_PlayerController`** no longer creates `WB_AmationTimeline`. `MetaHumanTest.Build.cs` lists `UMG`, `Slate`,
-  `SlateCore` (needed by the new code). No existing C++ was modified.
+* The HUD is created by **`CPP_PlayerController`** like the project's other widgets: new `MainHUDWidgetClass` (set to
+  `WBP_IHPC_HUD` in `BP_PlayerController`), `MainHUDZOrder` (10) and `GetMainHUD()`; the Level Blueprint of `Main` no
+  longer creates any UI (it did during step 1). **`BP_PlayerController`** no longer creates `WB_AmationTimeline`.
+  `MetaHumanTest.Build.cs` lists `UMG`, `Slate`, `SlateCore` (needed by the new code).

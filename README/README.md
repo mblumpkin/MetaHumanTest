@@ -54,8 +54,10 @@ MetaHumanTest/
 └─ README/                 ← you are here
 ```
 
-The **Main** level's Level Blueprint creates `WBP_IHPC_HUD` on Begin Play (it used to create the older `WBP_Header`
-draft, which is still in `Content/UserInterface/Widgets` but no longer used).
+**Who creates the HUD:** `CPP_PlayerController::BeginPlay` creates `WBP_IHPC_HUD` (set as **Main HUD Widget Class** in
+`BP_PlayerController` → Class Defaults), the same way it creates the anatomy switcher and pawn switcher, and draws it on
+top of them (Z-order 10). The Level Blueprint creates no UI. (The older `WBP_Header` draft is still in
+`Content/UserInterface/Widgets` but no longer used.)
 
 ## The one idea to understand
 

@@ -53,6 +53,12 @@ Call **Set Active Muscles** on the accordion with an array of names.
 * **Get the old prototype timeline back**: `BP_PlayerController` → Class Defaults → *Timeline Widget Class* =
   `WB_AmationTimeline` (and delete `Timeline` from `WBP_IHPC_HUD` so there are not two).
 
+## The HUD and the player controller
+* **Which HUD / its draw order**: `BP_PlayerController` → Class Defaults → *UI* → **Main HUD Widget Class** /
+  **Main HUD Z Order** (10 = above the other widgets).
+* **Reach the HUD from the controller** (e.g. a key that opens the panel): in C++ `GetMainHUD()->SelectTab(EIHPCNavTab::SavedVideos)`;
+  in Blueprint *Get Main HUD* → *Select Tab*. Other useful HUD calls: *Toggle Nav Bar*, *Set Analysis Panel Open*.
+
 ## React to clicks in Blueprint
 All events are under *IHPC | Events* on the widgets: `On Tab Changed`, `On Moment Selected`, `On Tagged Point Clicked`,
 `On Graphs Exported`, `On Zoom Requested`, `On Inspect Clicked`, and on the timeline `On Recording Saved`,
