@@ -45,8 +45,8 @@
   the skeleton stays where the teammate's code placed it, just hidden inside the body.
 * **Skeleton selected look** is not drawn in Figma; it was made in the same style as the other selected buttons
   (dark glossy circle + white icon).
-* **Orange badge** on the skeleton button is shown as in Figma but has no meaning yet (`SetSkeletonBadgeVisible` can
-  hide it, e.g. once a "new" item has been seen).
+* **Orange badge** on the skeleton button (in Figma) is **hidden** at the team's request — it had no meaning yet. It can
+  be turned back on with *Show Skeleton Badge* / `SetSkeletonBadgeVisible`.
 * **The slider is gone.** The placeholder had a vertical slider for any opacity value; the Figma design has only the
   three buttons, so the slider is kept but hidden (the parent class needs it). Make it visible in
   `WBP_IHPC_LayerSwitcher` if you want fine control back.
@@ -79,4 +79,4 @@
 6. Timeline: capture real video when recording (Take Recorder / Movie Render Queue on *On Recording Saved*), keep
    bookmarks between sessions, and run the injury-risk analysis on new clips to give them a real severity.
 7. Layer switcher: when the muscle layer is ready, set the real behaviour for **Muscles** (and Body / Skeleton if they
-   change) — either new Fade values in Class Defaults or a handler on *On Layer Changed*; decide what the badge means.
+   change) — either new Fade values in Class Defaults or a handler on *On Layer Changed*.

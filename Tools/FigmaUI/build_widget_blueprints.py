@@ -631,6 +631,17 @@ def build_layer_switcher():
     return t.finish(defaults)
 
 
+def hide_skeleton_badge():
+    """Later change (team request): hide the orange badge on the Skeleton button. Class Default
+    bShowSkeletonBadge = False (C++ then collapses SkeletonBadge); the designer copy is set Collapsed too.
+    Note: AssetTools.save_assets refuses to work while Play-In-Editor is running."""
+    pkg = WIDGETS + 'WBP_IHPC_LayerSwitcher'
+    setp({'refPath': pkg + '.Default__WBP_IHPC_LayerSwitcher_C'}, {'bShowSkeletonBadge': False})
+    setp({'refPath': pkg + '.WBP_IHPC_LayerSwitcher:WidgetTree.SkeletonBadge'}, {'Visibility': 'Collapsed'})
+    call(U + 'CompileWidgetBlueprint', {'widgetBlueprint': {'refPath': pkg + '.WBP_IHPC_LayerSwitcher'}})
+    return call(A + 'save_assets', {'asset_paths': [pkg]})['returnValue']
+
+
 def use_layer_switcher_instead_of_placeholder():
     """BP_PlayerController creates the new switcher instead of WB_AnatomyViewSwitcher (same property, so the
     controller code is unchanged), and the timeline moves left of centre like Figma so the two sit side by side."""
@@ -662,4 +673,5 @@ def run():
         'HudFromPlayerController': hook_hud_into_player_controller(),
         'LayerSwitcher': build_layer_switcher(),
         'LayerSwitcherInGame': use_layer_switcher_instead_of_placeholder(),
+        'HideSkeletonBadge': hide_skeleton_badge(),
     }

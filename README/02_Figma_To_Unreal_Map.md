@@ -140,7 +140,7 @@ screen centre** (1216 = 683 + 533) and **45 px above the bottom** (1024 − 979)
 | Body button | circle Ø 46, centre (43.45, 32.69) | `BodyLayer_Btn` | `T_IHPC_LS_Body_On` / `_Off` |
 | Muscles button | circle Ø 46, centre (102.33, 32.69) | `MusclesLayer_Btn` | `T_IHPC_LS_Muscles_On` / `_Off` |
 | Skeleton button | circle Ø 46, centre (161.2, 32.69) | `SkeletonLayer_Btn` | `T_IHPC_LS_Skeleton_On` / `_Off` |
-| Badge | white ring Ø 16.8 + orange `#EB8D71` Ø 13.1, centre (176.9, 16.55) | `SkeletonBadge` | `T_IHPC_LS_Badge` |
+| Badge | white ring Ø 16.8 + orange `#EB8D71` Ø 13.1, centre (176.9, 16.55) | `SkeletonBadge` | `T_IHPC_LS_Badge` — **hidden** (*Show Skeleton Badge* off) |
 
 Selected = dark navy glossy circle + white icon (frame 1: Body, frame 4: Muscles); unselected = light blue `#AFCBE3`
 fill, `#7CAFD2` rim (same blue as the timeline track), navy icon. The button textures are 214 px crops, drawn at 46.66 px so the circle inside is exactly

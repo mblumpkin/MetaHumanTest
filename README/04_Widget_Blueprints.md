@@ -85,13 +85,13 @@ LayerRoot (full screen, click-through)
 │  ├─ BodyLayer_Btn (C++)    (20.12, 9.36) 46.66×46.66 — picture set by C++ (T_IHPC_LS_Body_On / _Off)
 │  ├─ MusclesLayer_Btn (C++) (79.0, 9.36)  46.66×46.66 — T_IHPC_LS_Muscles_On / _Off
 │  ├─ SkeletonLayer_Btn (C++)(137.87, 9.36) 46.66×46.66 — T_IHPC_LS_Skeleton_On / _Off
-│  └─ SkeletonBadge (C++, optional)  (168.5, 8.15) 16.8×16.8, T_IHPC_LS_Badge, not clickable
+│  └─ SkeletonBadge (C++, optional)  (168.5, 8.15) 16.8×16.8, T_IHPC_LS_Badge, not clickable — hidden (Collapsed)
 ├─ AnatomyMetaHuman_Btn (C++ parent)       Collapsed — required by the teammate's class, not used
 └─ AnatomyViewSwitcher_Slider (C++ parent) Collapsed, 0..1, value 1 — the new buttons set it from C++
 ```
 **Move the whole switcher** by changing `LayerSwitcher`'s position (the children are relative to it).
 Class Defaults: the six button textures, `ButtonSize` 46.66, Fades (Body 1.0 / Muscles 0.5 / Skeleton 0.2),
-`DefaultLayer` Body; copied from the placeholder: `GroomStrandsAsset` = `Hair_S_UpdoBuns`, `GroomCardsAsset` =
+`DefaultLayer` Body, `bShowSkeletonBadge` **off** (badge hidden); copied from the placeholder: `GroomStrandsAsset` = `Hair_S_UpdoBuns`, `GroomCardsAsset` =
 `Hair_S_UpdoBuns1`, `PawnToSpawn` = `BP_SkeletonModel`.
 
 ## WBP_IHPC_NavTab — parent `CPP_UW_IHPCNavTab`

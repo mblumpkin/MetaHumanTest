@@ -116,10 +116,11 @@ it keeps everything the placeholder did:
 |---|---|
 | **Body** (layers icon) | Selected at the start (Figma frame 1). Sets the avatar's **Fade to 1** — body fully visible, hair back to strands. |
 | **Muscles** | Sets **Fade to 0.5** (body half see-through). The placeholder's Muscle button did nothing yet, so this is a stand-in until the muscle layer exists. |
-| **Skeleton** (+ orange badge) | Sets **Fade to 0.2** — exactly what the placeholder's button did: body faded, skeleton lined up with the body and visible, hair switches to cards. |
+| **Skeleton** | Sets **Fade to 0.2** — exactly what the placeholder's button did: body faded, skeleton lined up with the body and visible, hair switches to cards. |
 
 The clicked button turns **dark navy with a white icon** (selected); the others are **light blue with a navy icon**.
-Hovering brightens a button, pressing darkens it (like the timeline buttons).
+Hovering brightens a button, pressing darkens it (like the timeline buttons). The small orange badge Figma shows on
+the Skeleton button is **hidden** (team decision); tick *Show Skeleton Badge* in the widget's Class Defaults to bring it back.
 
 Tested in Play — left to right: **Skeleton** (0.2), **Muscles** (0.5), **Body** (1.0):
 

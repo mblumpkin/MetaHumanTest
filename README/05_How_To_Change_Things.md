@@ -61,7 +61,8 @@ Call **Set Active Muscles** on the accordion with an array of names.
   (*IHPC | Events*) and switch on `Layer`; or in C++ bind `OnLayerChanged`. Call **Select Layer** to change layer from
   anywhere (keyboard shortcut, tutorial…), **Get Selected Layer** to read it.
 * **Which button is selected at start**: *Default Layer*. Tick *Apply Default Layer On Start* to also apply its Fade.
-* **Hide the orange badge**: untick *Show Skeleton Badge*, or call **Set Skeleton Badge Visible** at runtime.
+* **Orange badge on Skeleton**: hidden now. To show it again tick *Show Skeleton Badge* (Class Defaults), or call
+  **Set Skeleton Badge Visible** at runtime (e.g. to flag something new).
 * **Move it**: select `LayerSwitcher` in `WBP_IHPC_LayerSwitcher` and change its position (anchored bottom-centre,
   now x 533, y -45). The timeline's position is in `WBP_IHPC_HUD` → `Timeline`.
 * **Bring back the opacity slider**: set `AnatomyViewSwitcher_Slider` to *Visible* and give it a position/size; it already
