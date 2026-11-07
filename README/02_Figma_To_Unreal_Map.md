@@ -17,6 +17,7 @@ Frames are **iPad Pro 12.9" (1366 × 1024)**. All Figma numbers below are Figma 
 | one card inside videos row | `WBP_IHPC_VideoCard` | `UCPP_UW_IHPCVideoCard` |
 | *(not in Figma — rows for the open Active Muscles / Tagged Points sections)* | *(built in code)* | `UCPP_UW_IHPCListRow` |
 | **Step 2:** `ihpc ui (1)ee 1` `124:1059` + text `x1.5` `153:323` (frame 1) | `WBP_IHPC_Timeline` | `UCPP_UW_IHPCTimeline` |
+| **Step 3:** `ihpc ui rttd 2` `128:1152` + `Rectangle 24` `128:1151` (frame 1; frame 4 `129:1203` for the Muscles-selected look) | `WBP_IHPC_LayerSwitcher` | `UCPP_UW_IHPCLayerSwitcher` (child of the teammate's `UCPP_UW_AnatomyViewSwitcher`) |
 
 ## Units
 
@@ -104,8 +105,8 @@ The extra size comes from a render scale so the neighbouring tabs do not shift w
 
 The Figma layer is a picture (1048 × 102; the original file is 3146 × 306 = 3×). Positions were measured from its
 alpha channel and divided by 3. In Unreal the bar sits **bottom-centre, 28 px above the bottom** (Figma frame 1: bar
-bottom at y 996 of 1024). Figma places it left of centre to leave room for the layer switcher at the bottom right; in this
-project that switcher is elsewhere, so the bar is centred.
+bottom at y 996 of 1024). Figma places it left of centre to leave room for the layer switcher at the bottom right. It was
+centred in step 2; since step 3 it is **125 px left of centre** like Figma (bar x 34–1082 of 1366, centre 558 = 683 − 125).
 
 | Element | Figma (x, y, w × h) | Unreal widget | Look |
 |---|---|---|---|
@@ -126,6 +127,25 @@ project that switcher is elsewhere, so the bar is centred.
 
 Buttons: hovered = 1.15× brighter, pressed = 0.8×.
 
+## Layer switcher / opacity buttons (`WBP_IHPC_LayerSwitcher`, 204 × 65) — step 3
+
+Figma's frames are drawn rotated, so positions were converted to the landscape screen (x = 1366 − y, y = x of the rotated
+layer). Frame 1: pill **`Rectangle 24`** at (1114, 914), 204 × 65; button picture **`ihpc ui rttd 2`** (186 × 70; original
+853 × 320 = 4.586×) at (1123, 913). In Unreal the switcher is anchored **bottom-centre, its centre 533 px right of the
+screen centre** (1216 = 683 + 533) and **45 px above the bottom** (1024 − 979).
+
+| Element | Figma (inside the 204 × 65 pill) | Unreal widget | Look |
+|---|---|---|---|
+| Pill | 0, 0, 204 × 65, radius 35.5, `#1D3C55` at 26 % | `Pill` (Image, rounded box) | radius 32.5 (= fully round at 65 tall) |
+| Body button | circle Ø 46, centre (43.45, 32.69) | `BodyLayer_Btn` | `T_IHPC_LS_Body_On` / `_Off` |
+| Muscles button | circle Ø 46, centre (102.33, 32.69) | `MusclesLayer_Btn` | `T_IHPC_LS_Muscles_On` / `_Off` |
+| Skeleton button | circle Ø 46, centre (161.2, 32.69) | `SkeletonLayer_Btn` | `T_IHPC_LS_Skeleton_On` / `_Off` |
+| Badge | white ring Ø 16.8 + orange `#EB8D71` Ø 13.1, centre (176.9, 16.55) | `SkeletonBadge` | `T_IHPC_LS_Badge` |
+
+Selected = dark navy glossy circle + white icon (frame 1: Body, frame 4: Muscles); unselected = light blue `#AFCBE3`
+fill, `#7CAFD2` rim (same blue as the timeline track), navy icon. The button textures are 214 px crops, drawn at 46.66 px so the circle inside is exactly
+46 px. Buttons: hovered = 1.15× brighter, pressed = 0.8× (set by C++).
+
 ## Textures (`/Game/UserInterface/IHPC/Textures`)
 
 | Texture | Made from | Used by |
@@ -142,5 +162,8 @@ Buttons: hovered = 1.15× brighter, pressed = 0.8×.
 | `T_IHPC_TL_Record` / `_Restart` / `_Pause` / `_SlowDown` / `_SpeedUp` / `_Play` / `_FastForward` / `_Bookmark` | exact crops of `ihpc ui (1)ee 1` (3×) | Timeline buttons |
 | `T_IHPC_TL_Thumb` | circular crop of the knob from the same picture | Timeline knob |
 | `T_IHPC_TL_Marker` | drawn from the measured ring/dot sizes and colour | Timeline markers |
+| `T_IHPC_LS_Body_On` / `_Off`, `T_IHPC_LS_Muscles_On` / `_Off`, `T_IHPC_LS_Skeleton_Off` | exact crops of `ihpc ui rttd 2` (4.586×) from frames 1 and 4; badge removed from the skeleton circle | Layer switcher buttons |
+| `T_IHPC_LS_Skeleton_On` | *not drawn in Figma* — rebuilt: empty glossy circle (from the two selected circles) + white skeleton icon | Layer switcher (Skeleton selected) |
+| `T_IHPC_LS_Badge` | drawn from the measured sizes: white ring Ø 16.8 + `#EB8D71` dot Ø 13.1 | Skeleton badge |
 
 All icons are rendered at 4× their Figma size so they stay sharp; the Widget Blueprints draw them at the Figma size.

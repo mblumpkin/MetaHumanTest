@@ -17,7 +17,7 @@ Full screen. Created by **`CPP_PlayerController::BeginPlay`** from `BP_PlayerCon
 
 ```
 HudCanvas (Canvas Panel, not hit-testable itself)
-├─ Timeline (C++, optional)     WBP_IHPC_Timeline, bottom-centre, 28 above the bottom, 1048×102   (step 2)
+├─ Timeline (C++, optional)     WBP_IHPC_Timeline, bottom-centre 125 px left of centre (Figma), 28 above the bottom, 1048×102   (step 2)
 ├─ AnalysisPanel (C++)          WBP_IHPC_AnalysisPanel, top-centre, y 167, 1217×798, hidden until Saved Videos
 ├─ ChevronGroup (C++)           Size Box 83×83, centre at (screen centre, 105) — moved down 88 when the menu opens
 │  └─ ChevronOverlay
@@ -74,6 +74,25 @@ TimelineSize (1048×102)
 ```
 Class Defaults: `MarkerTexture` = `T_IHPC_TL_Marker`, `TrackLength` 513, `MarkerSize` 19, `SpeedSteps`
 0.25 / 0.5 / 1 / 1.5 / 2 / 3, `DefaultSpeedIndex` 2.
+
+## WBP_IHPC_LayerSwitcher — parent `CPP_UW_IHPCLayerSwitcher` (step 3)
+Figma layers `ihpc ui rttd 2` + `Rectangle 24`. Created by `CPP_PlayerController` (`BP_PlayerController` →
+*Anatomy View Switcher Widget Class*), **not** inside the HUD — same place the placeholder `WB_AnatomyViewSwitcher` was.
+```
+LayerRoot (full screen, click-through)
+├─ LayerSwitcher             Canvas 204×65, anchor bottom-centre, position (533, -45), alignment (0.5, 1)
+│  ├─ Pill                   (0,0) 204×65, rounded box #1D3C55 at 26 %, radius 32.5 — catches clicks between buttons
+│  ├─ BodyLayer_Btn (C++)    (20.12, 9.36) 46.66×46.66 — picture set by C++ (T_IHPC_LS_Body_On / _Off)
+│  ├─ MusclesLayer_Btn (C++) (79.0, 9.36)  46.66×46.66 — T_IHPC_LS_Muscles_On / _Off
+│  ├─ SkeletonLayer_Btn (C++)(137.87, 9.36) 46.66×46.66 — T_IHPC_LS_Skeleton_On / _Off
+│  └─ SkeletonBadge (C++, optional)  (168.5, 8.15) 16.8×16.8, T_IHPC_LS_Badge, not clickable
+├─ AnatomyMetaHuman_Btn (C++ parent)       Collapsed — required by the teammate's class, not used
+└─ AnatomyViewSwitcher_Slider (C++ parent) Collapsed, 0..1, value 1 — the new buttons set it from C++
+```
+**Move the whole switcher** by changing `LayerSwitcher`'s position (the children are relative to it).
+Class Defaults: the six button textures, `ButtonSize` 46.66, Fades (Body 1.0 / Muscles 0.5 / Skeleton 0.2),
+`DefaultLayer` Body; copied from the placeholder: `GroomStrandsAsset` = `Hair_S_UpdoBuns`, `GroomCardsAsset` =
+`Hair_S_UpdoBuns1`, `PawnToSpawn` = `BP_SkeletonModel`.
 
 ## WBP_IHPC_NavTab — parent `CPP_UW_IHPCNavTab`
 ```

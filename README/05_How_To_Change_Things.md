@@ -44,14 +44,33 @@ Call **Set Active Muscles** on the accordion with an array of names.
   *Default Speed Index*.
 * **Don't start playback when recording starts**: untick *Play When Recording Starts*.
 * **Names of new clips/bookmarks**: *Recording Title Format* / *Bookmark Title Format* (`{0}` = the number).
-* **Move the bar** (e.g. left of centre like Figma): select `Timeline` in `WBP_IHPC_HUD` and change its position /
-  anchors. If you change the track length inside `WBP_IHPC_Timeline`, set *Track Length* to match.
+* **Move the bar** (now 125 px left of centre like Figma, beside the layer switcher): select `Timeline` in `WBP_IHPC_HUD`
+  and change its position / anchors. If you change the track length inside `WBP_IHPC_Timeline`, set *Track Length* to match.
 * **Make fast-forward something else** (e.g. skip 5 seconds, or play at 4×): change
   `UCPP_UW_IHPCTimeline::FastForwardToNextMarker` (C++), or bind your own logic to the button in the Blueprint.
 * **Save real video files when recording**: hook into *On Recording Saved* (HUD/Timeline) or extend
   `UCPP_UW_IHPCTimeline::ToggleRecording` — for example start/stop a Take Recorder or Movie Render capture there.
 * **Get the old prototype timeline back**: `BP_PlayerController` → Class Defaults → *Timeline Widget Class* =
   `WB_AmationTimeline` (and delete `Timeline` from `WBP_IHPC_HUD` so there are not two).
+
+## Layer switcher (Body / Muscles / Skeleton)
+* **What each button does**: `WBP_IHPC_LayerSwitcher` → Class Defaults → *IHPC | Layers* → **Body Fade** (1.0),
+  **Muscles Fade** (0.5), **Skeleton Fade** (0.2). The value goes to the avatar's `Fade` material parameter through the
+  teammate's `CPP_UW_AnatomyViewSwitcher` code (below 0.9 the hair also switches to cards).
+* **Hook up the real layers** (e.g. show the muscle mesh): in the Widget Blueprint's Event Graph add **On Layer Changed**
+  (*IHPC | Events*) and switch on `Layer`; or in C++ bind `OnLayerChanged`. Call **Select Layer** to change layer from
+  anywhere (keyboard shortcut, tutorial…), **Get Selected Layer** to read it.
+* **Which button is selected at start**: *Default Layer*. Tick *Apply Default Layer On Start* to also apply its Fade.
+* **Hide the orange badge**: untick *Show Skeleton Badge*, or call **Set Skeleton Badge Visible** at runtime.
+* **Move it**: select `LayerSwitcher` in `WBP_IHPC_LayerSwitcher` and change its position (anchored bottom-centre,
+  now x 533, y -45). The timeline's position is in `WBP_IHPC_HUD` → `Timeline`.
+* **Bring back the opacity slider**: set `AnatomyViewSwitcher_Slider` to *Visible* and give it a position/size; it already
+  drives the avatar like the old placeholder slider.
+* **Go back to the placeholder**: `BP_PlayerController` → Class Defaults → *Anatomy View Switcher Widget Class* =
+  `WB_AnatomyViewSwitcher`.
+* **New pictures** (e.g. after the Figma file changes): re-download `ihpc ui rttd 2` into
+  `SourceArt/Figma/Original/layers_f1_raw_1.png` (frame 1) / `layers_f4_raw_1.png` (frame 4), run
+  `make_ui_textures.py`, then `ue_import_textures.py`.
 
 ## Icons look blurry / pixelated
 Open the texture in `/Game/UserInterface/IHPC/Textures`: keep **Mip Gen Settings = Simple Average** (or *Sharpen 1–3* for
@@ -66,7 +85,7 @@ crisper) and **Filter = Trilinear**. *No Mipmaps* makes icons that are drawn sma
 ## React to clicks in Blueprint
 All events are under *IHPC | Events* on the widgets: `On Tab Changed`, `On Moment Selected`, `On Tagged Point Clicked`,
 `On Graphs Exported`, `On Zoom Requested`, `On Inspect Clicked`, and on the timeline `On Recording Saved`,
-`On Bookmark Added`, `On Marker Clicked`, `On Speed Changed`.
+`On Bookmark Added`, `On Marker Clicked`, `On Speed Changed`, and on the layer switcher `On Layer Changed`.
 
 ## Change where the CSV goes / its format
 `UCPP_UW_IHPCGraphAccordion::ExportGraphsToCSV` in `Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp`.

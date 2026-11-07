@@ -31,9 +31,30 @@
   **Restart** = jump to the start.
 * **Markers** = saved videos + recordings + bookmarks made in this session. Bookmarks are not saved between sessions yet.
 * **Scrubbing pauses** while you drag and resumes afterwards if it was playing.
-* **Position**: centred at the bottom (Figma has it left of centre beside the layer switcher, which in this project sits
-  on the left as a vertical slider).
+* **Position**: centred at the bottom in step 2; since step 3 it is 125 px left of centre like Figma, beside the new layer
+  switcher.
 * The **prototype timeline** (`WB_AmationTimeline`, `WCPP_AnimationTimeline`) is still in the project, just not created.
+
+### Layer switcher (step 3)
+* **UI only — the real layers are a teammate's work.** The buttons drive the placeholder's existing opacity code (the
+  `Fade` material parameter + skeleton alignment + hair strands/cards). There is **no muscle layer yet**, so **Muscles**
+  just sets Fade 0.5 (body half see-through) as a stand-in; change `MusclesFade` or use *On Layer Changed* when the muscle
+  layer exists. The placeholder's Muscle and Skeleton buttons had no code, its MetaHuman button set Fade 0.2 — that is
+  now the **Skeleton** button.
+* **Body = Fade 1.0.** Going back to Body makes the body fully visible again (like dragging the old slider to the top);
+  the skeleton stays where the teammate's code placed it, just hidden inside the body.
+* **Skeleton selected look** is not drawn in Figma; it was made in the same style as the other selected buttons
+  (dark glossy circle + white icon).
+* **Orange badge** on the skeleton button is shown as in Figma but has no meaning yet (`SetSkeletonBadgeVisible` can
+  hide it, e.g. once a "new" item has been seen).
+* **The slider is gone.** The placeholder had a vertical slider for any opacity value; the Figma design has only the
+  three buttons, so the slider is kept but hidden (the parent class needs it). Make it visible in
+  `WBP_IHPC_LayerSwitcher` if you want fine control back.
+* **Safety guard:** if the possessed pawn has no meshes tagged `WholePart` / `SkeletonPart` / `FacePart`, the buttons only
+  change their highlight and log a warning, instead of crashing like the placeholder would.
+* **Narrow windows:** the timeline (1048 px) and switcher (204 px) need about 1370 px of width side by side, like the
+  1366 px Figma frame; in a narrower game window they overlap the screen edges.
+* The placeholder `WB_AnatomyViewSwitcher` (`/Game/Widget`) is still in the project, just not created.
 
 ## Visual differences from Figma
 * **Font**: Avenir (already in the project) instead of Inter. See [05](05_How_To_Change_Things.md) to switch.
@@ -57,3 +78,5 @@
 5. Optionally switch to the Inter font.
 6. Timeline: capture real video when recording (Take Recorder / Movie Render Queue on *On Recording Saved*), keep
    bookmarks between sessions, and run the injury-risk analysis on new clips to give them a real severity.
+7. Layer switcher: when the muscle layer is ready, set the real behaviour for **Muscles** (and Body / Skeleton if they
+   change) — either new Fade values in Class Defaults or a handler on *On Layer Changed*; decide what the badge means.

@@ -17,7 +17,9 @@ The iPad frames show how these components fit together, so they were assembled t
 **Step 2 (added later):** the playback / timeline bar from the Figma layer **`ihpc ui (1)ee 1`** on frame 1 — record,
 restart, pause, slow down, speed up, play, fast-forward, bookmark and the timeline itself — replacing the project's
 prototype timeline. See [Timeline / playback bar](#timeline--playback-bar-wbp_ihpc_timeline) below.
-(The skin/muscle/skeleton switcher, layer `ihpc ui rttd 2`, is still the existing widget.)
+**Step 3 (added later):** the layer switcher / opacity buttons from the Figma layers **`ihpc ui rttd 2`** and
+**`Rectangle 24`** on frame 1 — Body, Muscles, Skeleton — replacing the top-left placeholder and keeping its
+functionality. See [Layer switcher](#layer-switcher--opacity-buttons-wbp_ihpc_layerswitcher) below.
 
 ## Behaviour
 
@@ -99,6 +101,39 @@ the project if you want them back ([05](05_How_To_Change_Things.md)).
 
 ![The new bar in the level](images/unreal_13_timeline_in_level.png)
 
+### Layer switcher / opacity buttons (`WBP_IHPC_LayerSwitcher`)
+
+| Figma (`ihpc ui rttd 2` + `Rectangle 24`) | Unreal |
+|---|---|
+| ![](images/figma_06_layer_switcher.png) | ![](images/unreal_14_layer_switcher_in_level.png) |
+
+Bottom right, beside the timeline (the same place as Figma frame 1). It **replaces the top-left placeholder**
+`WB_AnatomyViewSwitcher` (MetaHuman / Muscle / Skeleton buttons + a vertical slider). The opacity *layers* themselves
+(the muscle mesh, swapping body → skeleton → muscles) are being built by another team member; this step is the **UI** and
+it keeps everything the placeholder did:
+
+| Button | What it does now |
+|---|---|
+| **Body** (layers icon) | Selected at the start (Figma frame 1). Sets the avatar's **Fade to 1** — body fully visible, hair back to strands. |
+| **Muscles** | Sets **Fade to 0.5** (body half see-through). The placeholder's Muscle button did nothing yet, so this is a stand-in until the muscle layer exists. |
+| **Skeleton** (+ orange badge) | Sets **Fade to 0.2** — exactly what the placeholder's button did: body faded, skeleton lined up with the body and visible, hair switches to cards. |
+
+The clicked button turns **dark navy with a white icon** (selected); the others are **light blue with a navy icon**.
+Hovering brightens a button, pressing darkens it (like the timeline buttons).
+
+Tested in Play — left to right: **Skeleton** (0.2), **Muscles** (0.5), **Body** (1.0):
+
+![Skeleton / Muscles / Body](images/unreal_15_layer_switcher_states.png)
+
+**How it keeps the placeholder's behaviour:** the new widget's C++ class is a *child* of the teammate's
+`CPP_UW_AnatomyViewSwitcher`, so the placeholder's code runs unchanged (finding the parts tagged `WholePart`,
+`SkeletonPart`, `FacePart`, `HairPart`, lining up the skeleton, setting the **Fade** material parameter, strands ↔ cards).
+The new buttons move the parent's slider (hidden in the new widget), which is exactly what dragging the placeholder
+slider did. Nothing in the teammate's files was changed. When the real layers are ready they can change each button's
+Fade value or listen to **On Layer Changed** ([05](05_How_To_Change_Things.md)).
+
+To fit both bars at the bottom like Figma, the timeline now sits **125 px left of centre** (its Figma position).
+
 ## Connection to the existing project
 * Clicking a card, tagged point or marker, and every timeline button, use the project's existing
   **`UAnimationTimelineComp`** on the player's pawn (`PlayForward`, `Pause`, `SetNormalizedTime`, `PlaySpeed`) — the same
@@ -107,3 +142,5 @@ the project if you want them back ([05](05_How_To_Change_Things.md)).
   `WBP_IHPC_HUD` in `BP_PlayerController`), `MainHUDZOrder` (10) and `GetMainHUD()`; the Level Blueprint of `Main` no
   longer creates any UI (it did during step 1). **`BP_PlayerController`** no longer creates `WB_AmationTimeline`.
   `MetaHumanTest.Build.cs` lists `UMG`, `Slate`, `SlateCore` (needed by the new code).
+* **`BP_PlayerController`** → *Anatomy View Switcher Widget Class* is now `WBP_IHPC_LayerSwitcher` (was the placeholder
+  `WB_AnatomyViewSwitcher`, which is still in `/Game/Widget`). `CPP_PlayerController` creates it exactly as before.

@@ -18,10 +18,13 @@ This folder explains the user interface that was added to the **MetaHumanTest** 
 6. **Timeline bar** at the bottom: Play / Pause, slow down / speed up (the knob shows **x1.5** etc.), drag the knob,
    click an orange marker, **Bookmark**, **Record** twice (a new "Recording 1" card appears in Saved Videos),
    **Fast-forward** (jumps marker to marker), **Restart**.
+7. **Layer switcher** at the bottom right: **Skeleton** (body fades to 0.2, skeleton shows), **Muscles** (0.5),
+   **Body** (fully visible again).
 
 **To-do lists / step-by-step checklists with links to every function:**
 [GitHub issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1) (step 1: HUD, menu, analysis panel) ·
-[GitHub issue #2](https://github.com/mblumpkin/MetaHumanTest/issues/2) (step 2: timeline / playback bar)
+[GitHub issue #2](https://github.com/mblumpkin/MetaHumanTest/issues/2) (step 2: timeline / playback bar) ·
+[GitHub issue #3](https://github.com/mblumpkin/MetaHumanTest/issues/3) (step 3: layer switcher / opacity buttons)
 
 ## Pages in this folder
 
@@ -44,8 +47,8 @@ MetaHumanTest/
 │  ├─ Public/IHPC_UI/      ← C++ headers (what each widget exposes)
 │  └─ Private/IHPC_UI/     ← C++ code (what each widget does)
 ├─ Content/UserInterface/IHPC/
-│  ├─ Widgets/             ← 8 Widget Blueprints (the look/layout, editable in UMG)
-│  └─ Textures/            ← 23 UI textures (icons, toggle, card art, glow, shadow, timeline buttons)
+│  ├─ Widgets/             ← 9 Widget Blueprints (the look/layout, editable in UMG)
+│  └─ Textures/            ← 30 UI textures (icons, toggle, card art, glow, shadow, timeline + layer buttons)
 ├─ SourceArt/Figma/
 │  ├─ Original/            ← files downloaded from Figma
 │  ├─ Screens/             ← reference screenshots of the Figma frames
@@ -56,7 +59,8 @@ MetaHumanTest/
 
 **Who creates the HUD:** `CPP_PlayerController::BeginPlay` creates `WBP_IHPC_HUD` (set as **Main HUD Widget Class** in
 `BP_PlayerController` → Class Defaults), the same way it creates the anatomy switcher and pawn switcher, and draws it on
-top of them (Z-order 10). The Level Blueprint creates no UI. (The older `WBP_Header` draft is still in
+top of them (Z-order 10). The Level Blueprint creates no UI. The **layer switcher** (`WBP_IHPC_LayerSwitcher`, step 3) is
+the controller's *Anatomy View Switcher Widget Class*, in place of the old placeholder `WB_AnatomyViewSwitcher`. (The older `WBP_Header` draft is still in
 `Content/UserInterface/Widgets` but no longer used.)
 
 ## The one idea to understand

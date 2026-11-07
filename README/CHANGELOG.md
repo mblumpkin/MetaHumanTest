@@ -31,3 +31,12 @@ Repo: <https://github.com/mblumpkin/MetaHumanTest>
 | 18 | 2026-11-07 | [`50de3ec`](https://github.com/mblumpkin/MetaHumanTest/commit/50de3ec) | **Fix:** `Main` Level Blueprint compiler error — Begin Play still had a wire to the deleted Create Widget node; wire removed, level recompiles cleanly; Play-In-Editor checked (one HUD, no new errors). |
 | 19 | 2026-11-07 | [`019ae94`](https://github.com/mblumpkin/MetaHumanTest/commit/019ae94) | **Fix:** pixelated timeline icons — all 23 UI textures now have mipmaps (Simple Average), trilinear filtering, never stream; `ue_import_textures.py` updated to match. |
 | 20 | 2026-11-07 | [`29158cb`](https://github.com/mblumpkin/MetaHumanTest/commit/29158cb) | `WBP_IHPC_Timeline` edited by the team in the editor. |
+
+## Step 3 — layer switcher / opacity buttons ([issue #3](https://github.com/mblumpkin/MetaHumanTest/issues/3))
+
+| # | Date | Commit | Step |
+|---|---|---|---|
+| 21 | 2026-11-07 | [`91804a2`](https://github.com/mblumpkin/MetaHumanTest/commit/91804a2) | Figma layers `ihpc ui rttd 2` + `Rectangle 24` downloaded (frames 1 and 4); `make_layer_switcher_assets()` → `T_IHPC_LS_*.png` (Skeleton-selected look rebuilt, badge separated). |
+| 22 | 2026-11-07 | [`5279a5e`](https://github.com/mblumpkin/MetaHumanTest/commit/5279a5e) | C++: `CPP_UW_IHPCLayerSwitcher` (child of the teammate's `CPP_UW_AnatomyViewSwitcher`, unchanged) + `EIHPCAnatomyLayer`; build steps recorded in `build_widget_blueprints.py`. |
+| 23 | 2026-11-07 | [`1f32f00`](https://github.com/mblumpkin/MetaHumanTest/commit/1f32f00) | Built (*Succeeded*); 7 textures imported; `WBP_IHPC_LayerSwitcher` built; `BP_PlayerController` creates it instead of the top-left placeholder; timeline moved 125 px left (Figma). Tested Skeleton / Muscles / Body in Play-In-Editor. |
+| 24 | 2026-11-07 | *(this commit)* | README pages 01–07 updated for the layer switcher; screenshots. |

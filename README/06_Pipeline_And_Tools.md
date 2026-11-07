@@ -94,6 +94,32 @@ jagged. All 23 textures in `/Game/UserInterface/IHPC/Textures` now have **Mip Ge
 **Filter = Trilinear**, **Never Stream = on** (and `ue_import_textures.py` sets the same on re-import). For crisper but
 still smooth icons, try *Mip Gen Settings = Sharpen 1–3* on a texture.
 
+## Step 3 — layer switcher / opacity buttons (same pipeline)
+1. **Read**: Figma layers `ihpc ui rttd 2` (`128:1152`) + `Rectangle 24` (`128:1151`) on frame 1, and the same component
+   on frame 4 (`129:1203`, Muscles selected). The frames are drawn rotated, so positions were converted to the landscape
+   screen (x = 1366 − y, y = x).
+2. **Download**: `SourceArt/Figma/Original/layers_f1_*.png` (frame 1), `layers_f4_*.png` (frame 4) — `_raw_1` is the
+   4.586× original (853 × 320) — and `layers_pill_rect24.png` (the pill, a plain colour).
+3. **Textures**: `make_layer_switcher_assets()` in `make_ui_textures.py`:
+   * exact 214 px crops of each circle in both looks (Body/Muscles selected and unselected, Skeleton unselected);
+   * the orange badge removed from the skeleton circle by borrowing those rim pixels from another unselected circle (the
+     rims are identical), and drawn as its own texture so it can be shown/hidden;
+   * **Skeleton selected** (not in Figma) rebuilt: an empty glossy circle made from the two selected circles (where one has
+     icon lines the other has clean background; the few overlapping pixels painted over from the gradient), plus the
+     skeleton icon in white, its shape read from the unselected picture. Rebuilding *Body selected* the same way matches
+     Figma's real one within 0.6 / 255 on average, so the method is faithful.
+4. **C++**: `CPP_UW_IHPCLayerSwitcher` (child of the teammate's `CPP_UW_AnatomyViewSwitcher`, which was not changed) +
+   `EIHPCAnatomyLayer`. Built with the editor closed: *Succeeded* (the only warnings are the three existing ones in
+   `CPP_UW_AnatomyViewSwitcher.cpp`).
+5. **Import**: `ue_import_textures.py` (headless) — 7 new `T_IHPC_LS_*` textures. (The import re-saves the existing 23
+   textures with identical content; those files were reverted so the commit only contains the new ones.)
+6. **Widget Blueprint**: `build_layer_switcher()` in `build_widget_blueprints.py` (copies the hair / spawn defaults from
+   the placeholder); `use_layer_switcher_instead_of_placeholder()` points `BP_PlayerController` → *Anatomy View Switcher
+   Widget Class* at it and moves the timeline 125 px left (Figma position).
+7. **Test** in Play-In-Editor: the placeholder is gone, the switcher sits beside the timeline; Skeleton / Muscles / Body
+   each change the highlight and fade the avatar (log shows the teammate's code finding the `WholePart`, `FacePart`,
+   `SkeletonPart`, `HairPart` parts); no errors (screenshots in [01](01_Overview.md)).
+
 ## Git / GitHub
 * Repo: <https://github.com/mblumpkin/MetaHumanTest> (private), branch `main`.
 * `.uasset`, `.umap`, images and fonts are stored with **Git LFS** (see `.gitattributes`). (They are *not* marked

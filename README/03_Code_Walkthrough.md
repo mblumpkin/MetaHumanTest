@@ -18,6 +18,7 @@ pieces depend on each other. Line links point at the version on GitHub.
 - [CPP_UW_IHPCAnalysisPanel — the panel](#cpp_uw_ihpcanalysispanel--the-panel)
 - [CPP_UW_IHPCHud — title bar, menu, tabs](#cpp_uw_ihpchud--title-bar-menu-tabs)
 - [CPP_UW_IHPCTimeline — playback / timeline bar](#cpp_uw_ihpctimeline--playback--timeline-bar) *(added in step 2)*
+- [CPP_UW_IHPCLayerSwitcher — Body / Muscles / Skeleton buttons](#cpp_uw_ihpclayerswitcher--body--muscles--skeleton-buttons) *(added in step 3)*
 - [CPP_PlayerController — creates the HUD](#cpp_playercontroller--creates-the-hud) *(existing file, small addition)*
 - [What happens when you click…](#what-happens-when-you-click)
 
@@ -57,6 +58,7 @@ drawing used by the line graph (lines, text measuring).
 
 * **`EIHPCNavTab`** — `None, Profile, Progress, SavedVideos, HistoryTimeline, Settings`. Each nav tab has one of these as
   its id; the HUD uses it to know which tab was clicked.
+* **`EIHPCAnatomyLayer`** *(step 3)* — `Body, Muscles, Skeleton`: the three layer-switcher buttons.
 * **`EIHPCAccordionSection`** — `None, ShowGraphs, ActiveMuscles, TaggedPoints` (which accordion section is open).
 * **`FIHPCTaggedMoment`** — one saved video / tagged point: `Title`, `DateText`, `TimeText`, `Severity` (0..1 → tick
   position on the green-red bar), `NormalizedTime` (0..1 → where on the animation the moment is). It has a constructor
@@ -445,6 +447,52 @@ Events: `OnRecordingSaved`, `OnBookmarkAdded`, `OnMarkerClicked`, `OnSpeedChange
 
 ---
 
+## CPP_UW_IHPCLayerSwitcher — Body / Muscles / Skeleton buttons
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCLayerSwitcher.h) · [code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp) · Figma layers `ihpc ui rttd 2` + `Rectangle 24` (frame 1). Replaces the top-left
+placeholder `WB_AnatomyViewSwitcher` and **keeps its functionality**.
+
+**The key idea — a child class, not a copy.** The placeholder's opacity code lives in the teammate's
+`UCPP_UW_AnatomyViewSwitcher` (`Public/CPP_UW_AnatomyViewSwitcher.h`, not changed). Its slider handler
+`OnSliderValueChanged2(Value)` finds the pawn's skeletal meshes tagged `WholePart` / `SkeletonPart` / `FacePart` and the
+groom tagged `HairPart`, lines the skeleton up with the body's pelvis, sets the material parameter **`Fade`** = Value on
+the body, face and hair, and swaps the hair to cards below 0.9. `UCPP_UW_IHPCLayerSwitcher` **inherits** from that class,
+so all of this comes along unchanged; the new class only adds the look and decides which `Fade` each button sends. It
+sends it through the parent's own slider (`AnatomyViewSwitcher_Slider`, hidden in the Widget Blueprint), which is
+exactly what dragging the placeholder slider did. Because the controller's *Anatomy View Switcher Widget Class* is a
+`TSubclassOf<UCPP_UW_AnatomyViewSwitcher>`, the child class fits into it without touching `CPP_PlayerController`.
+
+Required widgets: `BodyLayer_Btn`, `MusclesLayer_Btn`, `SkeletonLayer_Btn` (Buttons); optional `SkeletonBadge` (Image);
+plus, for the parent, `AnatomyMetaHuman_Btn` (Button) and `AnatomyViewSwitcher_Slider` (Slider), both Collapsed.
+Settings (*IHPC | Layers*): `DefaultLayer` (Body), `bApplyDefaultLayerOnStart` (off), `BodyFade` (1.0), `MusclesFade`
+(0.5), `SkeletonFade` (0.2). Look (*IHPC | Style*): the six `…SelectedTexture` / `…UnselectedTexture`, `ButtonSize`
+(46.66), `HoveredTint` (1.15), `PressedTint` (0.8), `bShowSkeletonBadge`.
+Event: `OnLayerChanged(Layer, Fade)`.
+
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L12-L18) — runs in the designer too: select the default layer and paint the buttons, so the
+  Widget Blueprint already looks like Figma while editing.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L20-L45) — `Super::NativeConstruct()` first (the parent binds its slider and button), then bind
+  the three new buttons; optionally apply the default layer's Fade at start (off = like the placeholder, nothing changes
+  until a click).
+* [`HandleBodyClicked` / `HandleMusclesClicked` / `HandleSkeletonClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L47-L49) — one line each: `SelectLayer(...)`.
+* [`SelectLayer`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L51-L59) — remember the layer, repaint the buttons, send that layer's Fade to the avatar, fire
+  `OnLayerChanged`. Also callable from Blueprint.
+* [`GetFadeForLayer`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L61-L70) — Body → `BodyFade`, Muscles → `MusclesFade`, Skeleton → `SkeletonFade`.
+* [`CanDriveAvatarLayers`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L72-L102) — safety check: the parent uses the three tagged meshes **without null checks**
+  (and prints each one's mesh asset name), so if the current pawn lacks a `WholePart`, `SkeletonPart` or `FacePart`
+  skeletal mesh (or one has no mesh asset), it would crash. This returns false in that case.
+* [`ApplyFadeToAvatar`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L104-L132) — if the check fails, log one warning and stop (the buttons still change and the
+  event still fires). Otherwise `AnatomyViewSwitcher_Slider->SetValue(Fade)`, which calls the parent's
+  `OnSliderValueChanged2`. `USlider::SetValue` only notifies when the value *changes*, so if the slider is already at
+  that value it broadcasts `OnValueChanged` itself — every click re-applies (useful after switching pawns).
+* [`SetSkeletonBadgeVisible`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L134-L138) — show / hide the orange badge.
+* [`RefreshVisuals`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L140-L151) — each button gets its *selected* or *unselected* texture; the badge is
+  `HitTestInvisible` (it must not steal the skeleton button's clicks) or `Collapsed`.
+* [`ApplyButtonLook`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLayerSwitcher.cpp#L153-L179) — builds the button style from one texture: Normal (tint 1), Hovered (1.15),
+  Pressed (0.8), Disabled (0.5), no padding.
+
+---
+
 ## CPP_PlayerController — creates the HUD
 
 Existing project file ([header](../Source/MetaHumanTest/CPP_PlayerController.h) · [code](../Source/MetaHumanTest/CPP_PlayerController.cpp)); only these lines were
@@ -512,6 +560,12 @@ CheckBox → `UCPP_UW_IHPCToggleSwitch::HandleCheckStateChanged` → `OnToggled(
 
 **Timeline: Fast-forward**
 `FastForwardToNextMarker` → nearest marker after now → `SeekAvatarTimeline(t, no pause)` → next frame the knob moves there.
+
+**Layer switcher: Skeleton**
+`SkeletonLayer_Btn.OnClicked` → `UCPP_UW_IHPCLayerSwitcher::HandleSkeletonClicked` → `SelectLayer(Skeleton)` → buttons
+repainted (Skeleton dark, others light) → `ApplyFadeToAvatar(0.2)` → `CanDriveAvatarLayers` (tagged parts found) →
+`AnatomyViewSwitcher_Slider->SetValue(0.2)` → parent `UCPP_UW_AnatomyViewSwitcher::OnSliderValueChanged2(0.2)` → skeleton
+lined up, `Fade` = 0.2 on body/face/hair, hair → cards → `OnLayerChanged(Skeleton, 0.2)`.
 
 **Timeline: dragging the knob**
 Slider mouse capture begin → `HandleScrubBegin` (pause, remember) → each move `HandleScrubChanged` → `SeekAvatarTimeline`
