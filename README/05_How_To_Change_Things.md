@@ -77,6 +77,11 @@ Call **Set Active Muscles** on the accordion with an array of names.
 Open the texture in `/Game/UserInterface/IHPC/Textures`: keep **Mip Gen Settings = Simple Average** (or *Sharpen 1–3* for
 crisper) and **Filter = Trilinear**. *No Mipmaps* makes icons that are drawn smaller than the texture look jagged.
 
+**Ragged light/dark rim around a button or icon** = the colour stored in its invisible pixels is leaking into the edge
+when Unreal shrinks it. Always make textures with `make_ui_textures.py` (its last step, `bleed_all_outputs()`, fixes
+this for every PNG); if you add a PNG made elsewhere, put it in `SourceArt/Figma/UE/` and re-run the script before
+importing, or run `bleed_transparent_edges()` on it.
+
 ## The HUD and the player controller
 * **Which HUD / its draw order**: `BP_PlayerController` → Class Defaults → *UI* → **Main HUD Widget Class** /
   **Main HUD Z Order** (10 = above the other widgets).

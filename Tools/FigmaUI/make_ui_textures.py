@@ -396,6 +396,52 @@ def make_layer_switcher_assets():
     finish(img, 16.8, 16.8, "T_IHPC_LS_Badge.png")
 
 
+# ---------------------------------------------------------------------------
+# 9. Clean edges: "bleed" the colour into the invisible pixels (runs on every PNG at the end)
+# ---------------------------------------------------------------------------
+# A fully transparent pixel still stores a colour. Figma exports store WHITE there (our drawn icons store black).
+# Unreal shrinks UI textures (mipmaps) and blends neighbouring pixels (trilinear filtering) WITHOUT weighting by
+# transparency, so that hidden white/black leaks into the visible edge: dark glossy buttons get a light, ragged
+# rim and white icons a dark one - it reads as "pixelated edges" when the button is drawn small.
+# Fix: give every invisible pixel the colour of the nearest visible edge. Alpha is not changed, so the picture
+# looks identical at full size; only the blending at the edges becomes clean.
+
+def bleed_transparent_edges(path):
+    img = np.array(Image.open(path).convert("RGBA")).astype(np.float32)
+    alpha = img[..., 3] / 255.0
+    known = alpha > 0
+    if known.all() or not known.any():
+        return
+    rgb = img[..., :3].copy()
+    weight = alpha.copy()                      # how much each known pixel counts (edge pixels count less)
+    filled = known.copy()
+    while not filled.all():
+        acc = np.zeros_like(rgb)
+        wsum = np.zeros_like(weight)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dy == 0 and dx == 0:
+                    continue
+                w = np.roll(np.roll(weight * filled, dy, 0), dx, 1)
+                acc += np.roll(np.roll(rgb, dy, 0), dx, 1) * w[..., None]
+                wsum += w
+        grow = ~filled & (wsum > 0)
+        if not grow.any():
+            break
+        rgb[grow] = acc[grow] / wsum[grow][..., None]
+        weight[grow] = 1.0
+        filled |= grow
+    img[..., :3] = np.where(known[..., None], img[..., :3], rgb)
+    Image.fromarray(np.clip(np.round(img), 0, 255).astype(np.uint8)).save(path)
+
+
+def bleed_all_outputs():
+    names = sorted(f for f in os.listdir(OUT) if f.lower().endswith(".png"))
+    for name in names:
+        bleed_transparent_edges(os.path.join(OUT, name))
+    print("clean edges (colour bled into transparent pixels):", len(names), "textures")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     make_layer_switcher_assets()
@@ -411,6 +457,7 @@ def main():
     make_title_glow()
     make_drop_shadow()
     make_video_card_background()
+    bleed_all_outputs()        # must be last: fixes the edges of every texture made above
 
 
 if __name__ == "__main__":

@@ -120,6 +120,15 @@ still smooth icons, try *Mip Gen Settings = Sharpen 1–3* on a texture.
    each change the highlight and fade the avatar (log shows the teammate's code finding the `WholePart`, `FacePart`,
    `SkeletonPart`, `HairPart` parts); no errors (screenshots in [01](01_Overview.md)).
 
+## Fix — rough edges on the timeline and layer buttons
+Even with mipmaps the glossy buttons still had slightly ragged edges. Cause: a fully transparent pixel still stores a
+colour, and the Figma exports store **white** there (the icons drawn by the script store **black**). Unreal shrinks UI
+textures (mipmaps, *Simple Average*) and blends neighbouring pixels (trilinear filtering) **without weighting by
+transparency**, so that hidden white leaked into the dark navy edge as a light, uneven rim (and black into the white
+chevrons). Fix: `bleed_transparent_edges()` / `bleed_all_outputs()` in `make_ui_textures.py` (run last, on every PNG)
+fill each invisible pixel with the colour of the nearest visible edge. Alpha and every visible pixel stay exactly the
+same (checked: 0 changed), only the edge blending is clean. All textures re-imported.
+
 ## Git / GitHub
 * Repo: <https://github.com/mblumpkin/MetaHumanTest> (private), branch `main`.
 * `.uasset`, `.umap`, images and fonts are stored with **Git LFS** (see `.gitattributes`). (They are *not* marked
