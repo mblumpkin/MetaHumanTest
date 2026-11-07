@@ -12,6 +12,9 @@ public class MetaHumanTest : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "EnhancedInput", "HairStrandsCore" });
 
+		// IHPC UI (Source/MetaHumanTest/*/IHPC_UI): widgets, buttons, sliders and custom line drawing.
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
+
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		
