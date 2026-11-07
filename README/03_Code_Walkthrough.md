@@ -1,0 +1,376 @@
+# 03 — Code walkthrough (every file, every function)
+
+All new C++ lives in `Source/MetaHumanTest/Public/IHPC_UI/` (headers) and `Source/MetaHumanTest/Private/IHPC_UI/`
+(code). Every file also has comments inside it; this page explains the same code in plain language, in the order the
+pieces depend on each other. Line links point at the version on GitHub.
+
+- [Unreal ideas used everywhere](#unreal-ideas-used-everywhere)
+- [Build.cs change](#buildcs-change)
+- [IHPCTypes.h — shared data](#ihpctypesh--shared-data)
+- [IHPCUILibrary — helpers](#ihpcuilibrary--helpers)
+- [CPP_UW_IHPCToggleSwitch — Component 4](#cpp_uw_ihpctoggleswitch--component-4)
+- [CPP_UW_IHPCNavTab — one tab](#cpp_uw_ihpcnavtab--one-tab)
+- [CPP_UW_IHPCLineGraph — live graph](#cpp_uw_ihpclinegraph--live-graph)
+- [CPP_UW_IHPCListRow — list rows](#cpp_uw_ihpclistrow--list-rows)
+- [CPP_UW_IHPCGraphAccordion — Component 3](#cpp_uw_ihpcgraphaccordion--component-3)
+- [CPP_UW_IHPCVideoCard — one card](#cpp_uw_ihpcvideocard--one-card)
+- [CPP_UW_IHPCVideosRow — videos row](#cpp_uw_ihpcvideosrow--videos-row)
+- [CPP_UW_IHPCAnalysisPanel — the panel](#cpp_uw_ihpcanalysispanel--the-panel)
+- [CPP_UW_IHPCHud — title bar, menu, tabs](#cpp_uw_ihpchud--title-bar-menu-tabs)
+- [What happens when you click…](#what-happens-when-you-click)
+
+---
+
+## Unreal ideas used everywhere
+
+| Code | Meaning |
+|---|---|
+| `UCLASS()` / `GENERATED_BODY()` | Registers the class with Unreal so Blueprints, the editor and saving know about it. |
+| `UCLASS(Abstract)` | You cannot place the C++ class itself — you make a Widget Blueprint *child* of it (where the look is built). |
+| `class ... : public UUserWidget` | Every widget here is a "User Widget" — the same thing a Widget Blueprint is. |
+| `UPROPERTY(EditAnywhere, ...)` | A setting that shows up in the Blueprint's **Details** panel (Class Defaults). |
+| `UPROPERTY(meta = (BindWidget)) TObjectPtr<UButton> TabButton;` | "The Widget Blueprint **must** contain a Button called `TabButton`; give me a pointer to it." If the name is wrong the Blueprint will not compile. `BindWidgetOptional` = may be missing. |
+| `UFUNCTION(BlueprintCallable)` / `BlueprintPure` | The function can be called from Blueprint graphs (Pure = no side effects, no exec pin). |
+| `DECLARE_DYNAMIC_MULTICAST_DELEGATE...` + `UPROPERTY(BlueprintAssignable)` | An **event** other code/Blueprints can listen to (`OnTabClicked`, `OnMomentSelected`...). `Broadcast(...)` fires it. |
+| `Button->OnClicked.AddUniqueDynamic(this, &Class::Handler)` | "When this button is clicked, call my `Handler`." *Unique* = never bind twice. Handlers must be `UFUNCTION()`. |
+| `NativePreConstruct()` | Runs in the **UMG designer** *and* in game → used to make the designer preview look right. |
+| `NativeConstruct()` | Runs once when the widget appears in game → used to bind events and set the starting state. |
+| `NativeTick()` | Runs every frame while the widget is on screen. |
+| `ESlateVisibility::Visible / Collapsed / Hidden / HitTestInvisible / SelfHitTestInvisible` | Visible = drawn + clickable. Collapsed = gone, takes no space. Hidden = invisible but keeps its space. HitTestInvisible = drawn, clicks pass through it and its children. SelfHitTestInvisible = clicks pass through it but its children can still be clicked. |
+| `LOCTEXT("Key", "Text")` | Text that can be translated later. |
+
+---
+
+## Build.cs change
+
+[`MetaHumanTest.Build.cs`](../Source/MetaHumanTest/MetaHumanTest.Build.cs) — adds `"UMG", "Slate", "SlateCore"` to
+`PrivateDependencyModuleNames`. UMG gives the widget classes (Button, TextBlock…); Slate/SlateCore give the low-level
+drawing used by the line graph (lines, text measuring).
+
+---
+
+## IHPCTypes.h — shared data
+
+[`Public/IHPC_UI/IHPCTypes.h`](../Source/MetaHumanTest/Public/IHPC_UI/IHPCTypes.h) contains only data definitions:
+
+* **`EIHPCNavTab`** — `None, Profile, Progress, SavedVideos, HistoryTimeline, Settings`. Each nav tab has one of these as
+  its id; the HUD uses it to know which tab was clicked.
+* **`EIHPCAccordionSection`** — `None, ShowGraphs, ActiveMuscles, TaggedPoints` (which accordion section is open).
+* **`FIHPCTaggedMoment`** — one saved video / tagged point: `Title`, `DateText`, `TimeText`, `Severity` (0..1 → tick
+  position on the green-red bar), `NormalizedTime` (0..1 → where on the animation the moment is). It has a constructor
+  so sample data can be written in one line.
+* **`FIHPCGraphSeries`** — one line on a graph: `Name`, `LineColor`, `LegendColor`, `Values` (the numbers, evenly spaced
+  left → right) and `bVisible`.
+* **`FIHPCSimpleEvent`** (no data) and **`FIHPCMomentEvent`** (carries one `FIHPCTaggedMoment`) — event types several
+  widgets share.
+
+---
+
+## IHPCUILibrary — helpers
+
+[`Public/IHPC_UI/IHPCUILibrary.h`](../Source/MetaHumanTest/Public/IHPC_UI/IHPCUILibrary.h),
+[`Private/IHPC_UI/IHPCUILibrary.cpp`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp).
+A `UBlueprintFunctionLibrary` = a bag of static functions, also callable from any Blueprint.
+
+* [`FindAvatarTimeline`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp#L9) — gets player 0's pawn
+  (`UGameplayStatics::GetPlayerPawn`) and returns its `UAnimationTimelineComp` (the existing component that drives the
+  avatar animation scrubbing), or `nullptr` if there is none.
+* [`SeekAvatarTimeline`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp#L17) — finds the timeline; if missing,
+  logs a warning and returns `false`. Otherwise calls `Pause()` (so playback does not immediately move away) and
+  `SetNormalizedTime(time clamped to 0..1)`.
+* [`GetAvatarTimelineTime`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp#L35) — returns
+  `GetNormalizedTime()` or `-1` when there is no timeline (the graphs hide their playhead on `-1`).
+* [`FigmaColor`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp#L41) — `"B3CA7F"` → `FColor::FromHex` →
+  `FLinearColor` (this conversion turns sRGB into linear, which is what Unreal draws with) → sets the alpha.
+* [`SeverityToColor`](../Source/MetaHumanTest/Private/IHPC_UI/IHPCUILibrary.cpp#L50) — four colour stops sampled from the
+  Figma card bar (green `70BF44` at 0, yellow `F2DE1C` at .45, orange `F7A21F` at .75, red `ED1C24` at 1). Finds the two
+  stops around the value and blends them (`LerpUsingHSV`). Used for the dots in the Tagged Points list.
+
+---
+
+## CPP_UW_IHPCToggleSwitch — Component 4
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCToggleSwitch.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp)
+
+* Needs a CheckBox named **`SwitchCheckBox`** (its style = the two toggle textures, set in the Blueprint).
+* `bStartsOn` — starting state. `OnToggled(Switch, bIsOn)` — event fired when the user flips it (passes itself so one
+  handler can serve the four switches).
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp#L7) — `SetIsChecked(bStartsOn)`
+  so the designer shows the right state.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp#L18) — binds the CheckBox's
+  `OnCheckStateChanged` to `HandleCheckStateChanged`.
+* [`SetIsOn(bOn, bBroadcast)`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp#L28) — change it from
+  code; `SetIsChecked` does not fire the CheckBox event, so `bBroadcast` lets the caller decide whether to fire `OnToggled`.
+* [`IsOn`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp#L40) — current state.
+* [`HandleCheckStateChanged`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCToggleSwitch.cpp#L45) — re-broadcasts as
+  `OnToggled(this, bIsChecked)`.
+
+---
+
+## CPP_UW_IHPCNavTab — one tab
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCNavTab.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp)
+
+* Needs a Button **`TabButton`** containing a TextBlock **`TabLabel`**.
+* Settings: `TabId`, `Label`, `NormalFont`, `HighlightFont`, `HighlightScale` (1.2 = 24/20 px), `NormalColor` (white),
+  `HighlightColor` (`#B3CA7F`). Event: `OnTabClicked(TabId)`.
+* [`SetTabIdAndDefaultLabel`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L8) — called by the HUD: sets
+  the id, and the label only if the designer did not type one.
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L21) — if no fonts were chosen, use
+  the TextBlock's font for both; show the label; set the scale pivot to the centre (so the text grows evenly); apply the
+  look.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L46) — binds the button's `OnClicked`,
+  `OnHovered`, `OnUnhovered`.
+* [`SetSelected`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L59) — remembers selection, refreshes look.
+* [`HandleClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L65) — fires `OnTabClicked(TabId)`;
+  the tab itself does not decide what selection means — the HUD does.
+* [`HandleHovered` / `HandleUnhovered`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L70) — remember the
+  hover state, refresh.
+* [`RefreshVisuals`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCNavTab.cpp#L82) — highlight = selected **or**
+  hovered → highlight font, green colour, 1.2× render scale; otherwise normal font, white, 1×. Using a *render* scale
+  (not a bigger font) means the tab's layout size never changes, so the other tabs do not jump.
+
+---
+
+## CPP_UW_IHPCLineGraph — live graph
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCLineGraph.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp)
+
+Replaces the chart *pictures* in Figma with a real graph so the switches, export and playhead can work. It has no
+Widget Blueprint — it draws itself in `NativePaint`. Put it in a box with a size (it has no natural size).
+
+Settings: `Series`, `bGenerateDemoDataIfEmpty`, `DemoSeed`, `MinValue`/`MaxValue` (−1.2 / 0.7), `ValueTicks`
+(.5, 0, −.5, −1), `PlotPadding` (room for labels), colours, `LabelFont`, `LineThickness`, `bShowPlayhead`, `PlayheadColor`.
+
+* [Constructor](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L16) — default label font = Unreal's
+  built-in Roboto 8 (`ConstructorHelpers::FObjectFinder` loads it once; skipped on dedicated servers).
+* [`MakeDefaultSeriesLayout`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L28) — the four lines from
+  the Figma legend: Bones, Nerves, Muscles, Tendons. Legend colours are the exact Figma colours; line colours are brighter
+  versions so they read on the dark panel.
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L53) — no data + demo allowed →
+  `GenerateDemoData(DemoSeed)` (so the designer shows curves too).
+* [`SetSeries`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L64) /
+  [`SetSeriesVisible`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L69) — replace all data / show or
+  hide one line by index.
+* [`GenerateDemoData`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L77) — remembers each line's
+  visibility, rebuilds the 4-line layout, and for each line makes a seeded random stream (same seed → same curve every
+  time), picks 3 frequencies + 3 phases + an offset, and fills `NumSamples` values with the sum of three sine waves
+  (= a smooth organic line), clamped inside the axis range. Restores visibility.
+* [`ValueToY`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L121) — maps a value to a pixel row
+  (screen Y grows downward, values grow upward → `1 - alpha`).
+* [`FormatTick`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L128) — whole numbers as `"0"`,
+  `"-1"`; halves as `".5"`, `"-.5"` (Figma style, no leading zero).
+* [`NativePaint`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCLineGraph.cpp#L146) — called every frame to draw:
+  1. Works out the plot rectangle from the widget size minus `PlotPadding`; gives up if smaller than 20 px.
+  2. Prepares a `DrawLine` helper (`FSlateDrawElement::MakeLines`, anti-aliased) that also applies the widget's opacity.
+  3. **Grid**: a faint horizontal line at every value tick + 4 faint vertical lines (5 columns).
+  4. **Axes**: left and bottom lines (1.5 px) + small tick marks on the bottom axis.
+  5. **Labels**: measures each tick text (`FontMeasure->Measure`) so it can be right-aligned against the axis, then draws
+     it with `MakeText`.
+  6. **Data lines**: for each visible series with ≥ 2 values, converts every value to a point and draws one polyline.
+  7. **Playhead**: if a time ≥ 0 was given, a vertical green line at that fraction of the width.
+  Each step uses a higher *layer* number so later things draw on top. Returns the top layer used.
+* `SetPlayheadTime(t)` (header) — the accordion/panel call this every frame with the timeline position.
+
+---
+
+## CPP_UW_IHPCListRow — list rows
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCListRow.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp)
+
+Figma only shows the Active Muscles / Tagged Points sections *closed*, so this is a simple on-style row:
+`[coloured dot]  Primary text ……… secondary text`. It builds its own widgets in code.
+
+* [`MakeRoundedBrush`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp#L14) — a brush that draws a
+  rounded rectangle in one colour.
+* [`BuildTreeIfNeeded`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp#L29) — if not built yet: creates a
+  flat Button (invisible normally, faint white rounded box on hover/press) as the root; inside it a Horizontal Box with a
+  8 × 8 dot (Size Box + Border), the primary TextBlock (fills the row) and the secondary TextBlock (right side); binds
+  the button click.
+* [`Setup`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp#L87) — fills the texts and fonts (secondary is
+  3 pt smaller, 65% white, hidden if empty), colours the dot, and makes the row ignore the mouse if it is not clickable.
+* [`RebuildWidget`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp#L113) — makes sure the tree exists before
+  Unreal turns the widget into its on-screen form.
+* [`HandleClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCListRow.cpp#L119) — fires `OnRowClicked(this)`;
+  the owner reads `RowIndex` to know which item it was.
+
+---
+
+## CPP_UW_IHPCGraphAccordion — Component 3
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCGraphAccordion.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp)
+
+Required widgets: `Header_ShowGraphs/ActiveMuscles/TaggedPoints` (Buttons), `Chevron_*` (Images), `Content_*` (panels),
+`MovementGraph`, `ActiveMusclesGraph`, `Toggle_Bones/Nerves/Muscles/Tendons`, `DownloadButton`, `ZoomButton`,
+`ActiveMusclesList`, `TaggedPointsList` (Vertical Boxes).
+Settings: `StartOpenSection`, `bSeekTimelineOnTaggedPointClick`, `ChevronUpTexture`, `ChevronDownTexture`, `ListFont`,
+`ActiveMuscles`. Events: `OnZoomRequested`, `OnGraphsExported(FilePath)`, `OnTaggedPointClicked(Moment)`.
+
+* [Constructor](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L23) — fallback list font; six sample
+  muscle names that exist in the level's Muscles folder.
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L48) — shows the starting
+  section and the muscles list in the designer.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L58) — binds the 3 headers,
+  download, zoom and the 4 switches; if both graphs use the same seed, gives the second one a different seed; then opens
+  the starting section, applies the switch filter and builds both lists.
+* [`NativeTick`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L93) — while "Show graphs" is open,
+  pushes the timeline position into both graphs' playheads every frame.
+* [`OpenSection` / `ToggleSection` / header handlers](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L110)
+  — open one section (closing the others); clicking the open one closes it.
+* [`RefreshSections`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L125) — for each section: open →
+  content visible + up chevron; closed → content collapsed + down chevron.
+* [`GetToggles`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L154) — the 4 switches in the same
+  order as the graph lines (Bones, Nerves, Muscles, Tendons).
+* [`ApplyToggleFilter`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L165) — any switch on? For
+  each line: show it if no switch is on, or if its own switch is on. Applies to both graphs.
+* [`HandleDownload` / `HandleZoom`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L188) — export /
+  fire `OnZoomRequested` (the panel shows the big graph).
+* [`ExportGraphsToCSV`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L198) — makes
+  `Saved/IHPC_Exports/`, builds a file name with the date and time, writes a header row
+  (`Graph,Sample,NormalizedTime,Bones,Nerves,Muscles,Tendons`) then one row per sample for each graph, saves it, logs the
+  path, puts the path in the download icon's tooltip and fires `OnGraphsExported`. Returns the path (empty on failure).
+* [`SetActiveMuscles` / `SetTaggedPoints`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L267) —
+  store new data and rebuild the matching list.
+* [`RebuildActiveMusclesList`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L279) — clears the
+  list and adds one non-clickable row per muscle (dot = brightened "Muscles" legend colour).
+* [`RebuildTaggedPointsList`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L300) — one clickable
+  row per moment: title, time, severity-coloured dot; listens to the row click.
+* [`HandleTaggedPointRowClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp#L323) — looks up
+  the moment by the row's index, jumps the avatar timeline there (if enabled) and fires `OnTaggedPointClicked`.
+
+---
+
+## CPP_UW_IHPCVideoCard — one card
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCVideoCard.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp)
+
+Required: `CardButton`, `TitleText`, `DateText`, `TimeText`, `SeverityTick`; optional `SelectionHighlight`.
+Settings: `Moment` (preview data), `TickTravelWidth` (237 = 240 card − 3 tick). Event: `OnCardClicked(Card)`.
+
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L8) — show the moment and hide
+  the highlight (designer + game).
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L15) — bind the card button.
+* [`SetMoment`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L24) /
+  [`ApplyMoment`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L30) — copy the three texts and move the
+  tick sideways by `Severity × TickTravelWidth` (render translation, so layout is untouched).
+* [`SetSelected`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L43) — show/hide the green outline.
+* [`HandleClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideoCard.cpp#L51) — fire `OnCardClicked(this)`.
+
+---
+
+## CPP_UW_IHPCVideosRow — videos row
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCVideosRow.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp)
+
+Required: ScrollBox `CardScrollBox` (horizontal) and Slider `ScrollSlider` (the thin indicator).
+Settings: `Moments` (the cards), `CardClass` (= `WBP_IHPC_VideoCard`), `CardSpacing`, `bSeekTimelineOnSelect`.
+Event: `OnMomentSelected(Moment)`. Functions: `SetMoments`, `AddMoment`, `GetMoments`.
+
+* [Constructor](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L14) — the 5 Figma sample cards
+  (Soleus/Neck, Jan 4th 2026, 13:55 p.m.; severity 0.17 / 0.41 = where the tick sits on the Figma cards; times spread
+  0.1 → 0.9 along the animation).
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L33) — build the cards (so the
+  designer shows them).
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L39) — bind the slider's value
+  change and mouse capture begin/end; build the cards.
+* [`NativeTick`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L52) — keep the indicator in sync with
+  mouse-wheel scrolling.
+* [`SetMoments` / `AddMoment`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L62) — change data, rebuild.
+* [`RebuildCards`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L74) — clears the scroll box; for each
+  moment creates a `CardClass` widget, gives it the moment, listens to its click, adds it with `CardSpacing` on the right
+  (not after the last card).
+* [`HandleCardClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L106) — unhighlight the old card,
+  highlight the new one, jump the avatar timeline to its moment (if enabled), fire `OnMomentSelected`.
+* [`HandleSliderChanged`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L133) — slider 0..1 → scroll
+  offset 0..end.
+* [`HandleSliderCaptureBegin/End`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L142) — remember when
+  the user is dragging, so the tick-sync does not fight the drag.
+* [`SyncSliderToScroll`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCVideosRow.cpp#L145) — if nothing to scroll,
+  hide the thumb; else set the slider to offset ÷ end.
+
+---
+
+## CPP_UW_IHPCAnalysisPanel — the panel
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCAnalysisPanel.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp)
+
+Required: `GraphAccordion`, `VideosRow`, `InspectButton`; optional `ZoomedGraphContainer`, `ZoomedGraph`.
+Event: `OnInspectClicked`. Functions: `SetZoomedGraphVisible`, `IsZoomedGraphVisible`.
+
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L12) — start with the big
+  graph hidden.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L18) — listen to the accordion's
+  zoom event; copy the videos row's moments into the accordion's Tagged Points list; bind the inspect button.
+* [`NativeTick`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L39) — while the big graph is shown,
+  update its playhead.
+* [`SetZoomedGraphVisible`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L50) — when showing, copy
+  the small Movement Graph's lines (including which are switched on) into the big one; show/collapse the container.
+* [`HandleZoomRequested`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L66) — toggle the big graph.
+* [`HandleInspectClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCAnalysisPanel.cpp#L71) — if the big graph is
+  open, close it; otherwise fire `OnInspectClicked`.
+
+---
+
+## CPP_UW_IHPCHud — title bar, menu, tabs
+
+[header](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCHud.h) ·
+[code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp)
+
+Required: `NavBar`, `ChevronGroup`, `ChevronButton`, `ChevronCircle`, `ChevronIcon`, `Tab_Profile`, `Tab_Progress`,
+`Tab_SavedVideos`, `Tab_HistoryTimeline`, `Tab_Settings`; optional `AnalysisPanel`.
+Settings: `AnalysisPanelTab` (Saved Videos), `bStartWithNavBarOpen`, `NavBarHeight` (88), the two chevron textures,
+the two circle colours. Event: `OnTabChanged(NewTab)`.
+
+* [Constructor](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L15) — circle colours from Figma
+  (`#1D3C55` @ 44% closed, white @ 86% open).
+* [`GetTabs`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L23) — the 5 tabs as a list.
+* [`NativePreConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L28) — gives each tab its id and default
+  label (so names cannot get mixed up), shows the starting open/closed state in the designer.
+* [`NativeConstruct`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L48) — makes the HUD itself
+  click-through (`SelfHitTestInvisible`) so empty areas still reach the 3D view; binds the chevron and the 5 tabs; sets
+  the starting state; selects nothing (panel closed).
+* [`HandleChevronClicked` → `ToggleNavBar`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L76).
+* [`SetNavBarOpen`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L81) — show/collapse the nav bar, refresh
+  the chevron.
+* [`RefreshChevron`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L91) — move the circle down by
+  `NavBarHeight` when open (render translation), set the circle colour, swap the arrow picture.
+* [`HandleTabClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L115) — clicking the selected tab
+  unselects it; otherwise selects the clicked tab.
+* [`SelectTab`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L121) — highlight only the matching tab; open the
+  panel only if the tab is `AnalysisPanelTab`, and then close the nav bar (Figma frame 5); fire `OnTabChanged`.
+* [`SetAnalysisPanelOpen`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L142) — show/collapse the panel.
+
+---
+
+## What happens when you click…
+
+**The round arrow**
+`ChevronButton.OnClicked` → `UCPP_UW_IHPCHud::HandleChevronClicked` → `ToggleNavBar` → `SetNavBarOpen(true)` → `NavBar`
+visible → `RefreshChevron` (circle moves down 88, turns white, arrow becomes blue ▲).
+
+**"Saved Videos"**
+`TabButton.OnClicked` (inside `Tab_SavedVideos`) → `UCPP_UW_IHPCNavTab::HandleClicked` → `OnTabClicked(SavedVideos)` →
+`UCPP_UW_IHPCHud::HandleTabClicked` → `SelectTab(SavedVideos)` → tab turns green, `SetAnalysisPanelOpen(true)`,
+`SetNavBarOpen(false)`, `OnTabChanged` fired.
+
+**A video card**
+`CardButton.OnClicked` → `UCPP_UW_IHPCVideoCard::HandleClicked` → `OnCardClicked(card)` →
+`UCPP_UW_IHPCVideosRow::HandleCardClicked` → green outline on that card → `UIHPCUILibrary::SeekAvatarTimeline(moment
+time)` → `UAnimationTimelineComp::Pause()` + `SetNormalizedTime()` (the avatar pose jumps) → next frame the graphs'
+`NativeTick` reads the new time and the playhead moves.
+
+**The "Bones" switch**
+CheckBox → `UCPP_UW_IHPCToggleSwitch::HandleCheckStateChanged` → `OnToggled(switch, true)` →
+`UCPP_UW_IHPCGraphAccordion::HandleToggleChanged` → `ApplyToggleFilter` → `SetSeriesVisible` on both graphs → next
+`NativePaint` only draws the Bones line.
+
+**Download**
+`DownloadButton.OnClicked` → `HandleDownload` → `ExportGraphsToCSV` → file in `Saved/IHPC_Exports/`.
