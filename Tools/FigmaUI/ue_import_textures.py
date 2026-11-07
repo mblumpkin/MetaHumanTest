@@ -46,9 +46,13 @@ def import_textures():
             texture = unreal.load_asset(object_path)
             if not isinstance(texture, unreal.Texture2D):
                 continue
-            # UI textures: full quality RGBA, no mipmaps, "UI" texture group (never streamed out).
+            # UI textures: full quality RGBA (no compression), "UI" texture group, sRGB.
+            # The PNGs are 3-4x bigger than they are drawn, so they MUST have mipmaps + trilinear filtering,
+            # otherwise shrinking them on screen makes thin lines and edges look pixelated / jagged.
             texture.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_EDITOR_ICON)
-            texture.set_editor_property("mip_gen_settings", unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+            texture.set_editor_property("mip_gen_settings", unreal.TextureMipGenSettings.TMGS_SIMPLE_AVERAGE)
+            texture.set_editor_property("filter", unreal.TextureFilter.TF_TRILINEAR)
+            texture.set_editor_property("never_stream", True)
             texture.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
             texture.set_editor_property("srgb", True)
             unreal.EditorAssetLibrary.save_loaded_asset(texture, only_if_is_dirty=False)

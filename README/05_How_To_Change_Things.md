@@ -53,6 +53,10 @@ Call **Set Active Muscles** on the accordion with an array of names.
 * **Get the old prototype timeline back**: `BP_PlayerController` → Class Defaults → *Timeline Widget Class* =
   `WB_AmationTimeline` (and delete `Timeline` from `WBP_IHPC_HUD` so there are not two).
 
+## Icons look blurry / pixelated
+Open the texture in `/Game/UserInterface/IHPC/Textures`: keep **Mip Gen Settings = Simple Average** (or *Sharpen 1–3* for
+crisper) and **Filter = Trilinear**. *No Mipmaps* makes icons that are drawn smaller than the texture look jagged.
+
 ## The HUD and the player controller
 * **Which HUD / its draw order**: `BP_PlayerController` → Class Defaults → *UI* → **Main HUD Widget Class** /
   **Main HUD Z Order** (10 = above the other widgets).

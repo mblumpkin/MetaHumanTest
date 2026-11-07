@@ -27,7 +27,9 @@ python -I Tools/FigmaUI/make_ui_textures.py
 
 ## 4. Import into Unreal → `/Game/UserInterface/IHPC/Textures`
 [`Tools/FigmaUI/ue_import_textures.py`](../Tools/FigmaUI/ue_import_textures.py) (runs inside Unreal's Python).
-Sets UI-appropriate settings on each texture: *UserInterface2D* compression, no mipmaps, *UI* texture group, sRGB.
+Sets UI-appropriate settings on each texture: *UserInterface2D* compression (uncompressed), **mipmaps (Simple Average) +
+trilinear filter**, never stream, *UI* texture group, sRGB. (The first import used *no mipmaps*, which made the
+timeline icons look pixelated when drawn at a third of their size — fixed later, see below.)
 It was run headless while the editor was closed:
 ```
 UnrealEditor-Cmd.exe <project>/MetaHumanTest.uproject -run=pythonscript -script=<project>/Tools/FigmaUI/ue_import_textures.py -unattended -nosplash -nullrhi -SCCProvider=None
@@ -84,6 +86,13 @@ Two problems found and fixed during step 2:
 * **Colours looked too dark.** Colour brushes copied from the default ProgressBar / Slider styles still pointed at the
   engine's grey pictures (`ProgressBar_Background.png`, `Button.png`), which multiplied the colour (~70%). Cleared on the
   timeline track/slider and the videos-row scroll thumb; `brush_patch()` now always clears it.
+
+## Fix — pixelated icons
+The timeline button textures are 3× (other icons 4×) their on-screen size so they stay sharp on high-DPI screens. They
+were imported with **no mipmaps**, so the GPU had to shrink them 3–4× on the fly, which makes thin lines and glossy rims
+jagged. All 23 textures in `/Game/UserInterface/IHPC/Textures` now have **Mip Gen Settings = Simple Average**,
+**Filter = Trilinear**, **Never Stream = on** (and `ue_import_textures.py` sets the same on re-import). For crisper but
+still smooth icons, try *Mip Gen Settings = Sharpen 1–3* on a texture.
 
 ## Git / GitHub
 * Repo: <https://github.com/mblumpkin/MetaHumanTest> (private), branch `main`.
