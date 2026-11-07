@@ -127,7 +127,11 @@ textures (mipmaps, *Simple Average*) and blends neighbouring pixels (trilinear f
 transparency**, so that hidden white leaked into the dark navy edge as a light, uneven rim (and black into the white
 chevrons). Fix: `bleed_transparent_edges()` / `bleed_all_outputs()` in `make_ui_textures.py` (run last, on every PNG)
 fill each invisible pixel with the colour of the nearest visible edge. Alpha and every visible pixel stay exactly the
-same (checked: 0 changed), only the edge blending is clean. All textures re-imported.
+same (checked: 0 changed), only the edge blending is clean. All textures re-imported (headless, editor closed).
+
+In Play-In-Editor — top: before, bottom: after (zoomed 4×):
+
+![Clean edges before / after](images/unreal_16_clean_edges_before_after.png)
 
 ## Git / GitHub
 * Repo: <https://github.com/mblumpkin/MetaHumanTest> (private), branch `main`.
