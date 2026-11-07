@@ -53,6 +53,9 @@ before it).
 `MainHUDWidgetClass` / `MainHUDZOrder` / `GetMainHUD()`, created in `BeginPlay` with the controller as owner right after
 the anatomy and pawn switchers; `BP_PlayerController` → *Main HUD Widget Class* = `WBP_IHPC_HUD`; the Level Blueprint's
 Create Widget / Add to Viewport nodes were deleted (Begin Play is empty again).
+*Fix:* deleting those nodes left Begin Play's exec wire pointing at the deleted Create Widget node, so `Main` showed a
+compiler error (*"Statement tried to pass control flow to a node Create Widget that generates no code"*). The leftover
+wire was broken and the level recompiled cleanly.
 
 ## 8. Test in Play-In-Editor
 Clicked through every control (menu, tabs, accordion, switches, download, zoom, inspect, cards, tagged points) and

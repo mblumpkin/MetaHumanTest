@@ -565,6 +565,10 @@ def hook_hud_into_player_controller():
     setp(pc, {'MainHUDWidgetClass': {'refPath': WIDGETS + 'WBP_IHPC_HUD.WBP_IHPC_HUD_C'}})   # MainHUDZOrder stays 10
     B = 'editor_toolset.toolsets.blueprint.BlueprintTools.'
     graph = '/Game/Main.Main:PersistentLevel.Main.EventGraph'
+    # Unlink Begin Play first: delete_node alone left Begin Play's exec wire pointing at the deleted node
+    # ("Statement tried to pass control flow to a node Create Widget that generates no code").
+    call(B + 'break_pins', {'output_pin': {'direction': 'EGPD_Output', 'index_id': 1, 'node': {'refPath': graph + '.K2Node_Event_0'}},
+                            'input_pin': {'direction': 'EGPD_Input', 'index_id': 0, 'node': {'refPath': graph + '.K2Node_CreateWidget_0'}}})
     for node in ['K2Node_CallFunction_0', 'K2Node_CreateWidget_0']:   # Add to Viewport + Create Widget (WBP_IHPC_HUD)
         call(B + 'delete_node', {'node': {'refPath': graph + '.' + node}})
     call(B + 'compile_blueprint', {'blueprint': {'refPath': '/Game/Main.Main:PersistentLevel.Main'}, 'warnings_as_errors': False})
