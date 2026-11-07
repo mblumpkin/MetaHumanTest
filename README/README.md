@@ -15,9 +15,13 @@ This folder explains the user interface that was added to the **MetaHumanTest** 
 4. Click **Saved Videos** → the analysis panel opens.
 5. Try: **Show graphs**, the **Bones / Nerves / Muscles / Tendons** switches, the **download** icon (writes a CSV),
    the **zoom** icon (big graph), and click a **video card** (the avatar animation jumps to that moment).
+6. **Timeline bar** at the bottom: Play / Pause, slow down / speed up (the knob shows **x1.5** etc.), drag the knob,
+   click an orange marker, **Bookmark**, **Record** twice (a new "Recording 1" card appears in Saved Videos),
+   **Fast-forward** (jumps marker to marker), **Restart**.
 
-**To-do list / step-by-step checklist with links to every function:**
-[GitHub issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1)
+**To-do lists / step-by-step checklists with links to every function:**
+[GitHub issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1) (step 1: HUD, menu, analysis panel) ·
+[GitHub issue #2](https://github.com/mblumpkin/MetaHumanTest/issues/2) (step 2: timeline / playback bar)
 
 ## Pages in this folder
 
@@ -40,8 +44,8 @@ MetaHumanTest/
 │  ├─ Public/IHPC_UI/      ← C++ headers (what each widget exposes)
 │  └─ Private/IHPC_UI/     ← C++ code (what each widget does)
 ├─ Content/UserInterface/IHPC/
-│  ├─ Widgets/             ← 7 Widget Blueprints (the look/layout, editable in UMG)
-│  └─ Textures/            ← 13 UI textures (icons, toggle, card art, glow, shadow)
+│  ├─ Widgets/             ← 8 Widget Blueprints (the look/layout, editable in UMG)
+│  └─ Textures/            ← 23 UI textures (icons, toggle, card art, glow, shadow, timeline buttons)
 ├─ SourceArt/Figma/
 │  ├─ Original/            ← files downloaded from Figma
 │  ├─ Screens/             ← reference screenshots of the Figma frames

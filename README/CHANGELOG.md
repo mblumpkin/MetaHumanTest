@@ -12,4 +12,16 @@ Repo: <https://github.com/mblumpkin/MetaHumanTest>
 | 4 | 2026-11-06 | [`3e208b9`](https://github.com/mblumpkin/MetaHumanTest/commit/3e208b9) | C++ compiled (editor closed; *Succeeded*, no new warnings). 13 textures imported into `/Game/UserInterface/IHPC/Textures`. |
 | 5 | 2026-11-07 | [`d80e956`](https://github.com/mblumpkin/MetaHumanTest/commit/d80e956) | 7 Widget Blueprints built in `/Game/UserInterface/IHPC/Widgets`; `Main` Level Blueprint now creates `WBP_IHPC_HUD`. Tested in Play-In-Editor; fixed the invisible selected-card outline. *(Main.umap also includes level edits saved before the editor was closed for the build.)* |
 | 6 | 2026-11-07 | [`69b217c`](https://github.com/mblumpkin/MetaHumanTest/commit/69b217c) | `Tools/FigmaUI/build_widget_blueprints.py` — record of exactly how each Widget Blueprint was built. |
-| 7 | 2026-11-07 | *(this commit)* | `README/` folder: overview, Figma → Unreal map, code walkthrough, Widget Blueprint trees, how-tos, pipeline, limitations, screenshots. |
+| 7 | 2026-11-07 | [`400a763`](https://github.com/mblumpkin/MetaHumanTest/commit/400a763) | `README/` folder: overview, Figma → Unreal map, code walkthrough, Widget Blueprint trees, how-tos, pipeline, limitations, screenshots. |
+| 8 | 2026-11-07 | [`e5cfc4c`](https://github.com/mblumpkin/MetaHumanTest/commit/e5cfc4c) | README links to the checklist [issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1). |
+
+## Step 2 — timeline / playback bar ([issue #2](https://github.com/mblumpkin/MetaHumanTest/issues/2))
+
+| # | Date | Commit | Step |
+|---|---|---|---|
+| 9 | 2026-11-07 | [`f8b3479`](https://github.com/mblumpkin/MetaHumanTest/commit/f8b3479) | Figma layer `ihpc ui (1)ee 1` downloaded; `make_timeline_assets()` cuts the 8 buttons + knob and draws the marker → `T_IHPC_TL_*.png`. |
+| 10 | 2026-11-07 | [`4fe9713`](https://github.com/mblumpkin/MetaHumanTest/commit/4fe9713) | C++: `CPP_UW_IHPCTimeline`; library play/pause/speed/date helpers; `AddTaggedPoint` / `AddSavedVideo` / `GetSavedVideos`; HUD wiring. |
+| 11 | 2026-11-07 | [`8750fe7`](https://github.com/mblumpkin/MetaHumanTest/commit/8750fe7) | Built (editor closed; *Succeeded*); 10 timeline textures imported. |
+| 12 | 2026-11-07 | [`59d2883`](https://github.com/mblumpkin/MetaHumanTest/commit/59d2883) | `WBP_IHPC_Timeline` built and added to `WBP_IHPC_HUD`; `BP_PlayerController` no longer creates the prototype `WB_AmationTimeline`. **Fix:** removed Git LFS `lockable` (it made committed assets read-only). |
+| 13 | 2026-11-07 | [`af548f6`](https://github.com/mblumpkin/MetaHumanTest/commit/af548f6) | **Fix:** colour brushes no longer reference engine pictures (track was ~70% too dark; also the videos-row scroll thumb). Tested every timeline button in Play-In-Editor. |
+| 14 | 2026-11-07 | *(this commit)* | README pages updated for the timeline; `build_widget_blueprints.py` records `build_timeline()` and the HUD/controller change. |

@@ -16,6 +16,7 @@ Full screen. Created by the **Main** level's Level Blueprint (Begin Play → Cre
 
 ```
 HudCanvas (Canvas Panel, not hit-testable itself)
+├─ Timeline (C++, optional)     WBP_IHPC_Timeline, bottom-centre, 28 above the bottom, 1048×102   (step 2)
 ├─ AnalysisPanel (C++)          WBP_IHPC_AnalysisPanel, top-centre, y 167, 1217×798, hidden until Saved Videos
 ├─ ChevronGroup (C++)           Size Box 83×83, centre at (screen centre, 105) — moved down 88 when the menu opens
 │  └─ ChevronOverlay
@@ -47,6 +48,31 @@ HudCanvas (Canvas Panel, not hit-testable itself)
 Drawing order = list order (title bar on top, so the circle's top half hides behind it).
 Class Defaults: `ChevronClosedTexture` = `T_IHPC_HeaderChevron_Down`, `ChevronOpenTexture` = `T_IHPC_HeaderChevron_Up_Blue`,
 `AnalysisPanelTab` = Saved Videos, `NavBarHeight` = 88.
+
+## WBP_IHPC_Timeline — parent `CPP_UW_IHPCTimeline` (step 2)
+Figma layer `ihpc ui (1)ee 1`. Lives inside `WBP_IHPC_HUD` as `Timeline`.
+```
+TimelineSize (1048×102)
+└─ TimelineCanvas (click-through)
+   ├─ TrackProgress (C++)       ProgressBar (274,44) 513×10.67 — fill #183C55 (played), background #7CAFD2, Scale fill
+   ├─ ScrubSlider (C++)         invisible Slider (274,28) 513×43 — drag/click to scrub
+   ├─ MarkerLayer (C++)         Canvas (274,44) 513×10.67 — C++ adds one button per marker
+   ├─ ThumbGroup (C++)          Overlay 44×44 centred on the START of the track — C++ slides it along
+   │  ├─ ThumbImage             T_IHPC_TL_Thumb
+   │  └─ SpeedText (C++)        "x1.5", Avenir Medium 9
+   ├─ RecordButton (C++)        (20.3,28) 45.7×45.7, T_IHPC_TL_Record
+   │  └─ RecordIcon             same picture as content, tinted red by C++ while recording
+   ├─ RestartButton (C++)       (75.7,21.7) 58×58
+   ├─ PauseButton (C++)         (143.3,18) 65×65
+   ├─ SlowDownButton (C++)      (217,29) 46×45.7
+   ├─ SpeedUpButton (C++)       (798.7,27) 46×46
+   ├─ PlayButton (C++)          (854,18) 65×65
+   ├─ FastForwardButton (C++)   (927.3,22.7) 56.3×56
+   ├─ BookmarkButton (C++)      (991.7,28) 45.7×45.7
+   └─ RecordingIndicator (C++, optional)   12×12 red dot over the record button, hidden until recording
+```
+Class Defaults: `MarkerTexture` = `T_IHPC_TL_Marker`, `TrackLength` 513, `MarkerSize` 19, `SpeedSteps`
+0.25 / 0.5 / 1 / 1.5 / 2 / 3, `DefaultSpeedIndex` 2.
 
 ## WBP_IHPC_NavTab — parent `CPP_UW_IHPCNavTab`
 ```

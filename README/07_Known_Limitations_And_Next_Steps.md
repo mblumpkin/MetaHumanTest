@@ -23,6 +23,18 @@
 * **Clicking a card / tagged point** pauses the avatar animation and jumps to the moment's time.
 * **Title vertical position**: centred in the bar (the Figma frame includes an iPad status bar that PC builds do not have).
 
+### Timeline (step 2)
+* **Record does not write a video file.** It saves a *moment* ("Recording N": when it started on the animation and on
+  the clock) as a new Saved Videos card, Tagged Point and marker. Capturing real video needs Take Recorder / Movie
+  Render Queue hooked into *On Recording Saved* ([05](05_How_To_Change_Things.md)). New clips get severity 0 (no analysis).
+* **Fast-forward = jump to the next marker** (the icon is ▷|, "skip next"); with no marker ahead it jumps to the end.
+  **Restart** = jump to the start.
+* **Markers** = saved videos + recordings + bookmarks made in this session. Bookmarks are not saved between sessions yet.
+* **Scrubbing pauses** while you drag and resumes afterwards if it was playing.
+* **Position**: centred at the bottom (Figma has it left of centre beside the layer switcher, which in this project sits
+  on the left as a vertical slider).
+* The **prototype timeline** (`WB_AmationTimeline`, `WCPP_AnimationTimeline`) is still in the project, just not created.
+
 ## Visual differences from Figma
 * **Font**: Avenir (already in the project) instead of Inter. See [05](05_How_To_Change_Things.md) to switch.
 * **Charts**: drawn live instead of the Figma chart picture — same layout, axes and label style, real data lines.
@@ -43,3 +55,5 @@
 3. Build the Profile / Progress / History & Timeline / Settings screens (Figma desktop frames show their sub-menus).
 4. Use the empty viewer area for a 3D close-up (e.g. a Scene Capture of the avatar) and hook it to **Inspect**.
 5. Optionally switch to the Inter font.
+6. Timeline: capture real video when recording (Take Recorder / Movie Render Queue on *On Recording Saved*), keep
+   bookmarks between sessions, and run the injury-risk analysis on new clips to give them a real severity.

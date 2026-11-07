@@ -2,7 +2,7 @@
 build_widget_blueprints.py
 ==========================
 
-RECORD of how the 7 IHPC Widget Blueprints were built (2026-11-07).
+RECORD of how the 8 IHPC Widget Blueprints were built (2026-11-07).
 
 These are the exact steps that were sent to the Unreal Editor through the
 Unreal MCP "ProgrammaticToolset" (execute_tool_script). It is kept here so the
@@ -98,6 +98,11 @@ def brush_patch(b, draw, texname=None, size=None, color=('FFFFFF', 1.0), radii=(
         b['resourceObject'] = tex(texname)
         b['imageType'] = 'FullColor'
         b['resourceName'] = 'None'
+    else:
+        # Plain colour: drop any engine picture inherited from the default style
+        # (e.g. ProgressBar_Background.png), otherwise the colour is multiplied by it.
+        b['resourceName'] = 'None'
+        b['imageType'] = 'NoImage'
     if size:
         b['imageSize'] = {'x': size[0], 'y': size[1]}
     o = dict(b.get('outlineSettings', {}))
@@ -453,6 +458,106 @@ def build_hud():
                      'AnalysisPanelTab': 'SavedVideos', 'bStartWithNavBarOpen': False, 'NavBarHeight': 88})
 
 
+# ---------------------------------------------------------------------------
+# 8. WBP_IHPC_Timeline  (Figma layer "ihpc ui (1)ee 1" on frame 1, 1048 x 102)   — added 2026-11-07
+# ---------------------------------------------------------------------------
+
+# name, texture, x, y, w, h, tooltip   (positions measured from the 3x Figma picture / 3)
+TIMELINE_BUTTONS = [
+    ('RecordButton', 'T_IHPC_TL_Record', 20.33, 28, 45.67, 45.67, 'Record a clip'),
+    ('RestartButton', 'T_IHPC_TL_Restart', 75.67, 21.67, 58, 58, 'Restart'),
+    ('PauseButton', 'T_IHPC_TL_Pause', 143.33, 18, 65, 65, 'Pause'),
+    ('SlowDownButton', 'T_IHPC_TL_SlowDown', 217, 29, 46, 45.67, 'Slow down'),
+    ('SpeedUpButton', 'T_IHPC_TL_SpeedUp', 798.67, 27, 46, 46, 'Speed up'),
+    ('PlayButton', 'T_IHPC_TL_Play', 854, 18, 65, 65, 'Play'),
+    ('FastForwardButton', 'T_IHPC_TL_FastForward', 927.33, 22.67, 56.33, 56, 'Fast-forward to the next marker'),
+    ('BookmarkButton', 'T_IHPC_TL_Bookmark', 991.67, 28, 45.67, 45.67, 'Bookmark this moment'),
+]
+
+
+def tinted(b, texname, size, tint):
+    """Image brush of a texture with a grey-scale tint (1.15 = brighter on hover, 0.8 = darker when pressed)."""
+    b = brush_patch(b, 'Image', texname, size)
+    b['tintColor'] = {'specifiedColor': {'r': tint, 'g': tint, 'b': tint, 'a': 1}, 'colorUseRule': 'UseColor_Specified'}
+    return b
+
+
+def build_timeline():
+    t = BP('WBP_IHPC_Timeline', '/Script/MetaHumanTest.CPP_UW_IHPCTimeline')
+    t.add('SizeBox', 'TimelineSize'); t.sizebox('TimelineSize', 1048, 102)
+    t.add('CanvasPanel', 'TimelineCanvas', 'TimelineSize'); t.vis('TimelineCanvas', 'SelfHitTestInvisible')
+
+    # Track: progress bar, fill = played #183C55, background = to play #7CAFD2, 513 x 10.67, fully rounded.
+    t.add('ProgressBar', 'TrackProgress', 'TimelineCanvas'); t.canvas('TrackProgress', 274, 44, 513, 10.67)
+    st = getp(t.W('TrackProgress'), ['WidgetStyle'])['WidgetStyle']
+    st['backgroundImage'] = brush_patch(st['backgroundImage'], 'RoundedBox', None, None, ('7CAFD2', 1.0), (5.33,) * 4)
+    st['fillImage'] = brush_patch(st['fillImage'], 'RoundedBox', None, None, ('183C55', 1.0), (5.33,) * 4)
+    st['marqueeImage'] = brush_patch(st['marqueeImage'], 'NoDrawType')
+    setp(t.W('TrackProgress'), {'WidgetStyle': st, 'BarFillType': 'LeftToRight', 'BarFillStyle': 'Scale',   # Scale = rounded end
+                                'Percent': 0.545, 'FillColorAndOpacity': {'r': 1, 'g': 1, 'b': 1, 'a': 1},
+                                'Visibility': 'HitTestInvisible'})
+
+    # Invisible slider on top of the track for scrubbing (43 tall = knob height).
+    t.add('Slider', 'ScrubSlider', 'TimelineCanvas'); t.canvas('ScrubSlider', 274, 28, 513, 43)
+    ss = getp(t.W('ScrubSlider'), ['WidgetStyle'])['WidgetStyle']
+    for k in ['normalBarImage', 'hoveredBarImage', 'disabledBarImage']:
+        ss[k] = brush_patch(ss[k], 'NoDrawType')
+    for k in ['normalThumbImage', 'hoveredThumbImage', 'disabledThumbImage']:
+        ss[k] = brush_patch(ss[k], 'NoDrawType', None, (1, 43))
+    ss['barThickness'] = 0
+    setp(t.W('ScrubSlider'), {'WidgetStyle': ss, 'IndentHandle': False, 'IsFocusable': False,   # IndentHandle off: value = x / width
+                              'MinValue': 0, 'MaxValue': 1, 'Value': 0.545,
+                              'ToolTipText': 'Drag to move through the animation'})
+
+    # Marker dots are created here by C++.
+    t.add('CanvasPanel', 'MarkerLayer', 'TimelineCanvas'); t.canvas('MarkerLayer', 274, 44, 513, 10.67); t.vis('MarkerLayer', 'SelfHitTestInvisible')
+
+    # Knob + speed text ("x1.5", Inter Medium 12 -> Avenir Medium 9), centred on the START of the track.
+    t.add('Overlay', 'ThumbGroup', 'TimelineCanvas'); t.canvas('ThumbGroup', 274, 49.33, 44, 44, (0, 0, 0, 0), (0.5, 0.5)); t.vis('ThumbGroup', 'HitTestInvisible')
+    t.add('Image', 'ThumbImage', 'ThumbGroup'); t.image('ThumbImage', 'Image', 'T_IHPC_TL_Thumb', (44, 44)); t.pad('ThumbImage', h='HAlign_Fill', v='VAlign_Fill')
+    t.add('TextBlock', 'SpeedText', 'ThumbGroup'); t.text('SpeedText', 'x1.5', 'medium', 12, just='Center'); t.pad('SpeedText', h='HAlign_Center', v='VAlign_Center')
+
+    # The eight glossy buttons.
+    for name, texname, x, y, w, h, tip in TIMELINE_BUTTONS:
+        t.add('Button', name, 'TimelineCanvas'); t.canvas(name, x, y, w, h)
+        bs = getp(t.W(name), ['WidgetStyle'])['WidgetStyle']
+        bs['normal'] = brush_patch(bs['normal'], 'Image', texname, (w, h))
+        bs['hovered'] = tinted(bs['hovered'], texname, (w, h), 1.15)
+        bs['pressed'] = tinted(bs['pressed'], texname, (w, h), 0.8)
+        bs['disabled'] = tinted(bs['disabled'], texname, (w, h), 0.5)
+        bs['normalPadding'] = {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+        bs['pressedPadding'] = {'left': 0, 'top': 0, 'right': 0, 'bottom': 0}
+        setp(t.W(name), {'WidgetStyle': bs, 'IsFocusable': False, 'BackgroundColor': {'r': 1, 'g': 1, 'b': 1, 'a': 1}, 'ToolTipText': tip})
+
+    # Record button content = the same picture, so C++ can tint it red while recording.
+    t.add('Image', 'RecordIcon', 'RecordButton'); t.image('RecordIcon', 'Image', 'T_IHPC_TL_Record', (45.67, 45.67))
+    t.pad('RecordIcon', h='HAlign_Fill', v='VAlign_Fill'); t.vis('RecordIcon', 'HitTestInvisible')
+    # Red pulsing dot over the record button while recording.
+    t.add('Image', 'RecordingIndicator', 'TimelineCanvas'); t.image('RecordingIndicator', 'RoundedBox', None, (12, 12), ('FF3B3B', 1.0), (6,) * 4)
+    t.canvas('RecordingIndicator', 37.17, 44.83, 12, 12); t.vis('RecordingIndicator', 'Hidden')
+
+    return t.finish({'MarkerTexture': tex('T_IHPC_TL_Marker'), 'TrackLength': 513, 'MarkerSize': 19, 'DesignerPreviewTime': 0.545})
+
+
+def add_timeline_to_hud_and_retire_prototype():
+    """Puts WBP_IHPC_Timeline into WBP_IHPC_HUD and stops BP_PlayerController creating WB_AmationTimeline."""
+    hud = '/Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD.WBP_IHPC_HUD'
+    info = call(U + 'AddWidget', {'widgetBlueprint': {'refPath': hud},
+                                  'widgetClass': {'refPath': WIDGETS + 'WBP_IHPC_Timeline.WBP_IHPC_Timeline_C'},
+                                  'widgetDisplayName': 'Timeline',
+                                  'parentWidget': {'refPath': hud + ':WidgetTree.HudCanvas'},
+                                  'childIndex': 0})['returnValue']        # index 0 = drawn behind the analysis panel
+    # Bottom-centre, bar bottom 28 px above the screen bottom (Figma frame 1).
+    setp(info['slot'], {'LayoutData': {'offsets': {'left': 0, 'top': -28, 'right': 1048, 'bottom': 102},
+                                       'anchors': {'minimum': {'x': 0.5, 'y': 1}, 'maximum': {'x': 0.5, 'y': 1}},
+                                       'alignment': {'x': 0.5, 'y': 1}}, 'bAutoSize': False, 'ZOrder': 0})
+    call(U + 'CompileWidgetBlueprint', {'widgetBlueprint': {'refPath': hud}})
+    pc = {'refPath': '/Game/Blueprints/BP_PlayerController.Default__BP_PlayerController_C'}
+    setp(pc, {'TimelineWidgetClass': None})                               # old prototype no longer created
+    return call(A + 'save_assets', {'asset_paths': ['/Game/UserInterface/IHPC/Widgets/WBP_IHPC_HUD',
+                                                    '/Game/Blueprints/BP_PlayerController']})['returnValue']
+
+
 def run():
     """Build order matters: children before the widgets that contain them."""
     return {
@@ -463,4 +568,6 @@ def run():
         'GraphAccordion': build_graph_accordion(),
         'AnalysisPanel': build_analysis_panel(),
         'HUD': build_hud(),
+        'Timeline': build_timeline(),
+        'TimelineInHud': add_timeline_to_hud_and_retire_prototype(),
     }

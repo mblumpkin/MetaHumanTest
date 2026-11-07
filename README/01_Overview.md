@@ -14,8 +14,10 @@ The iPad frames show how these components fit together, so they were assembled t
 | iPad Pro 12.9" – 3 | Menu open: 5 tabs (white circle, blue ▲) | ![](images/unreal_02_nav_open.png) |
 | iPad Pro 12.9" – 5 | Analysis panel: viewer, Component 3, videos row | ![](images/unreal_03_analysis_panel.png) |
 
-> The playback bar and the skin/muscle/skeleton switcher in the Figma frames are **screenshots of the existing Unreal
-> widgets** (`ihpc ui (1)ee 1`, `ihpc ui rttd 2` layers). They were left as they are.
+**Step 2 (added later):** the playback / timeline bar from the Figma layer **`ihpc ui (1)ee 1`** on frame 1 — record,
+restart, pause, slow down, speed up, play, fast-forward, bookmark and the timeline itself — replacing the project's
+prototype timeline. See [Timeline / playback bar](#timeline--playback-bar-wbp_ihpc_timeline) below.
+(The skin/muscle/skeleton switcher, layer `ihpc ui rttd 2`, is still the existing widget.)
 
 ## Behaviour
 
@@ -67,8 +69,40 @@ The iPad frames show how these components fit together, so they were assembled t
 ### Component 4 — toggle switch (`WBP_IHPC_ToggleSwitch`)
 Grey track + knob left (off) / green `#B3CA7F` track + knob right (on), exactly the two Figma variants.
 
+### Timeline / playback bar (`WBP_IHPC_Timeline`)
+
+| Figma (`ihpc ui (1)ee 1` + the `x1.5` text) | Unreal |
+|---|---|
+| ![](images/figma_05_timeline.png) | ![](images/unreal_09_timeline_x1_5.png) |
+
+At the bottom centre of the screen (inside the HUD, behind the analysis panel). Left to right:
+
+| Button | What it does |
+|---|---|
+| **Record** (ring) | 1st click: start recording (also starts playback); the button turns red and a red dot pulses. 2nd click: stop → a new clip **"Recording N"** (date/time = when you started, position = where you started) appears as a **new card in Saved Videos**, a new **Tagged Point** and a new **marker** on the track. |
+| **Restart** (◀\|) | Jump to the start; keeps playing if it was playing. |
+| **Pause** | Pause the avatar animation. |
+| **Slow down** (low speedometer) | One step slower: 3× → 2× → 1.5× → 1× → 0.5× → 0.25×. |
+| **Timeline** | Dark part = already played, light part = still to play. **Drag or click** to scrub (playback pauses while you drag and resumes after). The knob shows the speed (**x1.5** in Figma). **Orange markers** = saved videos, recordings and bookmarks; **click a marker** to jump there; hover it to see its name. |
+| **Speed up** (high speedometer) | One step faster. |
+| **Play** | Play forward (from the start again if it is at the end). |
+| **Fast-forward** (\|▶) | Jump to the **next marker** after the current time (or to the end if there is none). |
+| **Bookmark** | Drop a marker at the current time; it is added to **Tagged Points** as "Bookmark N". |
+
+| Recording (button red, dot pulsing) | New recordings in Saved Videos | Bookmark + recording in Tagged Points |
+|---|---|---|
+| ![](images/unreal_10_timeline_recording.png) | ![](images/unreal_11_recordings_in_saved_videos.png) | ![](images/unreal_12_bookmark_recording_tagged_points.png) |
+
+The old prototype timeline (`WB_AmationTimeline`: three grey buttons + a slider) is **no longer created** — its slot in
+`BP_PlayerController` (*Timeline Widget Class*) was cleared. The asset and its C++ (`WCPP_AnimationTimeline`) are still in
+the project if you want them back ([05](05_How_To_Change_Things.md)).
+
+![The new bar in the level](images/unreal_13_timeline_in_level.png)
+
 ## Connection to the existing project
-* Clicking a card or tagged point calls the project's existing **`UAnimationTimelineComp`** (the component the
-  `WB_AmationTimeline` play/pause/scrub bar already uses) on the player's pawn: `Pause()` then `SetNormalizedTime()`.
-* Nothing in the existing widgets or C++ was changed, except the **Level Blueprint** of `Main` now creates the new HUD
-  instead of `WBP_Header`, and `MetaHumanTest.Build.cs` now lists `UMG`, `Slate`, `SlateCore` (needed by the new code).
+* Clicking a card, tagged point or marker, and every timeline button, use the project's existing
+  **`UAnimationTimelineComp`** on the player's pawn (`PlayForward`, `Pause`, `SetNormalizedTime`, `PlaySpeed`) — the same
+  component the old prototype timeline used.
+* Existing assets changed: the **Level Blueprint** of `Main` creates the new HUD instead of `WBP_Header`;
+  **`BP_PlayerController`** no longer creates `WB_AmationTimeline`. `MetaHumanTest.Build.cs` lists `UMG`, `Slate`,
+  `SlateCore` (needed by the new code). No existing C++ was modified.

@@ -56,9 +56,32 @@ Clicked through every control (menu, tabs, accordion, switches, download, zoom, 
 compared screenshots with the Figma frames — see the images in [01](01_Overview.md). One bug found and fixed: the selected
 card's green outline was invisible because the outline inherited the fill's 0% opacity.
 
+## Step 2 — timeline / playback bar (same pipeline)
+1. **Read**: Figma layer `ihpc ui (1)ee 1` (`124:1059`) on frame 1 + the `x1.5` text layer (`153:323`).
+2. **Download**: `SourceArt/Figma/Original/timeline_export.png` (1×) and `timeline_raw_1.png` (3× original).
+3. **Measure**: each element's box from the 3× picture's alpha channel (see the table in [02](02_Figma_To_Unreal_Map.md)).
+4. **Textures**: `make_timeline_assets()` in `make_ui_textures.py` — exact crops of the 8 buttons, a circular crop of the
+   knob, and the marker dot drawn from its measured sizes/colour → `T_IHPC_TL_*` (10 textures).
+5. **C++**: `CPP_UW_IHPCTimeline` + small additions to the library / accordion / panel / HUD; built with the editor
+   closed (*Succeeded*, no new warnings).
+6. **Import**: `ue_import_textures.py` (headless) — imports all PNGs; the existing 13 came out unchanged.
+7. **Widget Blueprint**: `build_timeline()` in `build_widget_blueprints.py`; `add_timeline_to_hud_and_retire_prototype()`
+   put it into the HUD and cleared `BP_PlayerController` → *Timeline Widget Class*.
+8. **Test** in Play-In-Editor: every button, scrubbing, markers, and that recordings/bookmarks reach Saved Videos and
+   Tagged Points (screenshots in [01](01_Overview.md)).
+
+Two problems found and fixed during step 2:
+* **Assets were read-only.** The Git LFS `lockable` attribute (first commit) makes Git set every committed `.uasset/.umap`
+  to read-only until it is "locked", so Unreal could not save them. `lockable` was removed from `.gitattributes` and the
+  read-only flags cleared. If you ever see "*… as it is read only*" when saving, run
+  `attrib -R /S Content\*.uasset` (or untick *Read-only* in the file's Properties).
+* **Colours looked too dark.** Colour brushes copied from the default ProgressBar / Slider styles still pointed at the
+  engine's grey pictures (`ProgressBar_Background.png`, `Button.png`), which multiplied the colour (~70%). Cleared on the
+  timeline track/slider and the videos-row scroll thumb; `brush_patch()` now always clears it.
+
 ## Git / GitHub
 * Repo: <https://github.com/mblumpkin/MetaHumanTest> (private), branch `main`.
-* `.uasset`, `.umap`, images and fonts are stored with **Git LFS** (see `.gitattributes`); `.uasset`/`.umap` are
-  *lockable* for teamwork.
+* `.uasset`, `.umap`, images and fonts are stored with **Git LFS** (see `.gitattributes`). (They are *not* marked
+  lockable any more — see step 2 above.)
 * `Binaries/`, `Intermediate/`, `Saved/`, `DerivedDataCache/`, `.vs/`, `*.sln` are ignored (rebuilt automatically).
 * Every step above was committed and pushed separately — see [CHANGELOG.md](CHANGELOG.md).

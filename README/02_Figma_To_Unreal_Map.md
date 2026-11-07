@@ -16,6 +16,7 @@ Frames are **iPad Pro 12.9" (1366 × 1024)**. All Figma numbers below are Figma 
 | videos row `157:620` | `WBP_IHPC_VideosRow` | `UCPP_UW_IHPCVideosRow` |
 | one card inside videos row | `WBP_IHPC_VideoCard` | `UCPP_UW_IHPCVideoCard` |
 | *(not in Figma — rows for the open Active Muscles / Tagged Points sections)* | *(built in code)* | `UCPP_UW_IHPCListRow` |
+| **Step 2:** `ihpc ui (1)ee 1` `124:1059` + text `x1.5` `153:323` (frame 1) | `WBP_IHPC_Timeline` | `UCPP_UW_IHPCTimeline` |
 
 ## Units
 
@@ -99,6 +100,32 @@ The extra size comes from a render scale so the neighbouring tabs do not shift w
 | Date / time | regular, white | `DateText`, `TimeText` Avenir Medium 10 pt |
 | Severity tick | white, 3 × 13, on the green→red bar | `SeverityTick`, moved by `Severity × 237` px |
 
+## Timeline / playback bar (`WBP_IHPC_Timeline`, 1048 × 102) — step 2
+
+The Figma layer is a picture (1048 × 102; the original file is 3146 × 306 = 3×). Positions were measured from its
+alpha channel and divided by 3. In Unreal the bar sits **bottom-centre, 28 px above the bottom** (Figma frame 1: bar
+bottom at y 996 of 1024). Figma places it left of centre to leave room for the layer switcher at the bottom right; in this
+project that switcher is elsewhere, so the bar is centred.
+
+| Element | Figma (x, y, w × h) | Unreal widget | Look |
+|---|---|---|---|
+| Record | 20.3, 28, 45.7 × 45.7 | `RecordButton` (+ `RecordIcon`) | `T_IHPC_TL_Record`; red tint `#FF6B6B` while recording |
+| Recording dot | *(not in Figma)* | `RecordingIndicator` | 12 px red `#FF3B3B` circle over the record button, pulsing |
+| Restart | 75.7, 21.7, 58 × 58 | `RestartButton` | `T_IHPC_TL_Restart` |
+| Pause | 143.3, 18, 65 × 65 | `PauseButton` | `T_IHPC_TL_Pause` |
+| Slow down | 217, 29, 46 × 45.7 | `SlowDownButton` | `T_IHPC_TL_SlowDown` |
+| Track | 274, 44, 513 × 10.67, fully rounded | `TrackProgress` (ProgressBar, *Scale* fill) | fill (played) `#183C55`, background `#7CAFD2` |
+| Scrub area | over the track, 43 tall | `ScrubSlider` | invisible |
+| Markers | white ring Ø 19 + orange `#EB8D71` Ø 13.7, on the track | buttons in `MarkerLayer` | `T_IHPC_TL_Marker` |
+| Knob | Ø 43, centre at 54.5% of the track | `ThumbGroup` → `ThumbImage` | `T_IHPC_TL_Thumb` (cut from the Figma picture) |
+| Speed text | "x1.5", Inter Medium 12, white, on the knob | `SpeedText` | Avenir Medium 9 pt |
+| Speed up | 798.7, 27, 46 × 46 | `SpeedUpButton` | `T_IHPC_TL_SpeedUp` |
+| Play | 854, 18, 65 × 65 | `PlayButton` | `T_IHPC_TL_Play` |
+| Fast-forward | 927.3, 22.7, 56.3 × 56 | `FastForwardButton` | `T_IHPC_TL_FastForward` |
+| Bookmark | 991.7, 28, 45.7 × 45.7 | `BookmarkButton` | `T_IHPC_TL_Bookmark` |
+
+Buttons: hovered = 1.15× brighter, pressed = 0.8×.
+
 ## Textures (`/Game/UserInterface/IHPC/Textures`)
 
 | Texture | Made from | Used by |
@@ -112,5 +139,8 @@ The extra size comes from a render scale so the neighbouring tabs do not shift w
 | `T_IHPC_VideoCard_BG` | "Rectangle 35" PNG, text removed | Video card |
 | `T_IHPC_TitleGlow` | title glow gradient numbers | HUD title |
 | `T_IHPC_DropShadow` | box-shadow numbers | HUD bar shadows |
+| `T_IHPC_TL_Record` / `_Restart` / `_Pause` / `_SlowDown` / `_SpeedUp` / `_Play` / `_FastForward` / `_Bookmark` | exact crops of `ihpc ui (1)ee 1` (3×) | Timeline buttons |
+| `T_IHPC_TL_Thumb` | circular crop of the knob from the same picture | Timeline knob |
+| `T_IHPC_TL_Marker` | drawn from the measured ring/dot sizes and colour | Timeline markers |
 
 All icons are rendered at 4× their Figma size so they stay sharp; the Widget Blueprints draw them at the Figma size.

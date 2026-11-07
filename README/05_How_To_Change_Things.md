@@ -39,9 +39,24 @@ evenly spaced across the width; adjust **Min Value / Max Value / Value Ticks** i
 ## Show real active muscles
 Call **Set Active Muscles** on the accordion with an array of names.
 
+## Timeline / playback bar
+* **Speeds** the slow/fast buttons step through: `WBP_IHPC_Timeline` → Class Defaults → *Speed Steps*; starting speed =
+  *Default Speed Index*.
+* **Don't start playback when recording starts**: untick *Play When Recording Starts*.
+* **Names of new clips/bookmarks**: *Recording Title Format* / *Bookmark Title Format* (`{0}` = the number).
+* **Move the bar** (e.g. left of centre like Figma): select `Timeline` in `WBP_IHPC_HUD` and change its position /
+  anchors. If you change the track length inside `WBP_IHPC_Timeline`, set *Track Length* to match.
+* **Make fast-forward something else** (e.g. skip 5 seconds, or play at 4×): change
+  `UCPP_UW_IHPCTimeline::FastForwardToNextMarker` (C++), or bind your own logic to the button in the Blueprint.
+* **Save real video files when recording**: hook into *On Recording Saved* (HUD/Timeline) or extend
+  `UCPP_UW_IHPCTimeline::ToggleRecording` — for example start/stop a Take Recorder or Movie Render capture there.
+* **Get the old prototype timeline back**: `BP_PlayerController` → Class Defaults → *Timeline Widget Class* =
+  `WB_AmationTimeline` (and delete `Timeline` from `WBP_IHPC_HUD` so there are not two).
+
 ## React to clicks in Blueprint
 All events are under *IHPC | Events* on the widgets: `On Tab Changed`, `On Moment Selected`, `On Tagged Point Clicked`,
-`On Graphs Exported`, `On Zoom Requested`, `On Inspect Clicked`.
+`On Graphs Exported`, `On Zoom Requested`, `On Inspect Clicked`, and on the timeline `On Recording Saved`,
+`On Bookmark Added`, `On Marker Clicked`, `On Speed Changed`.
 
 ## Change where the CSV goes / its format
 `UCPP_UW_IHPCGraphAccordion::ExportGraphsToCSV` in `Private/IHPC_UI/CPP_UW_IHPCGraphAccordion.cpp`.
