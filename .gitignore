@@ -1,0 +1,38 @@
+# Unreal generated / cache folders
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
+# IDE files (regenerate via "Generate Visual Studio project files")
+.vs/
+.vscode/
+.idea/
+*.sln
+*.slnx
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Build artifacts
+*.pdb
+*.obj
+*.exp
+*.lib
+*.dll
+*.exe
+
+# Local tool settings
+.claude/settings.local.json
+
+# Perforce
+.p4config
+.p4ignore.txt
+
+# OS
+Thumbs.db
+.DS_Store
