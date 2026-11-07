@@ -8,6 +8,7 @@
 #include "CPP_UW_AnatomyViewSwitcher.h"
 #include "CPP_UW_PawnSwitcher.h"
 #include "CPP_UW_SpeedSlider.h"
+#include "IHPC_UI/CPP_UW_IHPCHud.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"   // add this
 #include "GameFramework/PlayerController.h"
@@ -78,7 +79,21 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="UI")
 	TSubclassOf<UCPP_UW_PawnSwitcher> PawnSwitcherWidgetClass;
 
-	
+	// IHPC HUD from the Figma design (title bar, menu, analysis panel, timeline bar).
+	// Set this to WBP_IHPC_HUD in BP_PlayerController > Class Defaults.
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="UI")
+	TSubclassOf<UCPP_UW_IHPCHud> MainHUDWidgetClass;
+
+	// Draw order of the HUD: higher = on top. 10 keeps it above the other widgets (they use 0).
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="UI")
+	int32 MainHUDZOrder = 10;
+
+	// The HUD that was created in BeginPlay, so the controller (or Blueprint) can reach it later,
+	// e.g. GetMainHUD()->SelectTab(EIHPCNavTab::SavedVideos) to open the analysis panel from a key press.
+	UFUNCTION(BlueprintPure, Category="UI")
+	UCPP_UW_IHPCHud* GetMainHUD() const { return MainHUDWidget; }
+
+
 private:
 	UPROPERTY()
 	UCPP_UW_SpeedSlider* SpeedSliderWidgetInstance{};
@@ -96,6 +111,10 @@ private:
 
 	UPROPERTY()
 	UCPP_UW_PawnSwitcher* PawnSwitcherWidget = nullptr;
+
+	// IHPC HUD instance (see MainHUDWidgetClass)
+	UPROPERTY()
+	UCPP_UW_IHPCHud* MainHUDWidget = nullptr;
 
 
 	

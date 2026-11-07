@@ -82,6 +82,17 @@ void ACPP_PlayerController::BeginPlay()
 	}
 	}
 
+	// IHPC HUD (title bar, menu, analysis panel, timeline bar) - created here like the other widgets,
+	// owned by this controller, and drawn on top of them (MainHUDZOrder = 10).
+	if (MainHUDWidgetClass)
+	{
+		MainHUDWidget = CreateWidget<UCPP_UW_IHPCHud>(this, MainHUDWidgetClass);
+		if (MainHUDWidget)
+		{
+			MainHUDWidget->AddToViewport(MainHUDZOrder);
+		}
+	}
+
 
 	ACPP_PlayerPlaceHolderManagerA* PlayerPlaceHolderManager =
 		Cast<ACPP_PlayerPlaceHolderManagerA>
