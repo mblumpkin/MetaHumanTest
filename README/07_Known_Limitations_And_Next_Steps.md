@@ -11,9 +11,14 @@
 ## Interpretations (decisions made where Figma did not say)
 * **Saved Videos opens the analysis panel.** The panel shows saved clips, graphs and tagged points, and frame 5 shows
   it with the menu closed. Change with *Analysis Panel Tab* on `WBP_IHPC_HUD`.
-* **Profile, Progress, History & Timeline, Settings** highlight and fire `OnTabChanged`, but have no screen — none is in
-  the requested components. (The desktop frames on the same Figma page show sub-menus such as *Manage Information,
-  MRI & Cam Scan, Timeline…*; they can be built next.)
+* **Profile, Progress, History & Timeline, Settings** open an **empty** panel styled like Figma frame 5 "Rectangle 26"
+  (step 4) — their content is not in the requested components. (The desktop frames on the same Figma page show
+  sub-menus such as *Manage Information, MRI & Cam Scan, Timeline…*; they can be built inside `…Content` next.)
+* **Close "X"** is not in Figma: it was designed to match the HUD (navy circle like the title bar, white rounded X like
+  the menu arrow) and sits on the panel's rounded top-right corner, because inside the corner it would cover the
+  "Show graphs" header of Component 3.
+* **Every panel closes the nav bar** when it opens (before step 4 only Saved Videos did); the other tabs used to leave
+  the menu open.
 * **Switches = filters.** Figma draws all four switches off with all lines visible, so "none on" = show all; turning
   some on shows only those lines.
 * **One accordion section open at a time** (keeps the panel within the screen; Figma shows one open).

@@ -43,3 +43,11 @@ Repo: <https://github.com/mblumpkin/MetaHumanTest>
 | 25 | 2026-11-07 | [`a416db2`](https://github.com/mblumpkin/MetaHumanTest/commit/a416db2) | Orange badge on the Skeleton button hidden (team request): *Show Skeleton Badge* off; checked in Play-In-Editor. |
 | 26 | 2026-11-07 | [`cff7a82`](https://github.com/mblumpkin/MetaHumanTest/commit/cff7a82) | **Fix:** rough edges on buttons — `bleed_all_outputs()` in `make_ui_textures.py` fills invisible pixels with the edge colour (Figma stored white there, which leaked into the edges when Unreal shrinks textures). |
 | 27 | 2026-11-07 | [`8abc945`](https://github.com/mblumpkin/MetaHumanTest/commit/8abc945) | 28 textures re-imported with clean edges; checked in Play-In-Editor (before/after in README/06). |
+
+## Step 4 — close "X" + panels for the other tabs ([issue #4](https://github.com/mblumpkin/MetaHumanTest/issues/4))
+
+| # | Date | Commit | Step |
+|---|---|---|---|
+| 28 | 2026-11-07 | [`71c391c`](https://github.com/mblumpkin/MetaHumanTest/commit/71c391c) | C++: `CPP_UW_IHPCHud` gets `ProfilePanel` / `ProgressPanel` / `HistoryTimelinePanel` / `SettingsPanel` + `PanelCloseButton`, `GetPanelForTab`, `RefreshPanels`, `ClosePanel`; `make_close_icon()` → `T_IHPC_Close.png`; build step recorded. |
+| 29 | 2026-11-07 | [`cc61a4d`](https://github.com/mblumpkin/MetaHumanTest/commit/cc61a4d) | Built (*Succeeded*); `T_IHPC_Close` imported; 4 "Rectangle 26" panels + the X added to `WBP_IHPC_HUD`. Tested: Saved Videos / Profile open, X closes them. |
+| 30 | 2026-11-07 | *(this commit)* | README pages updated for the X and the tab panels; screenshots. |

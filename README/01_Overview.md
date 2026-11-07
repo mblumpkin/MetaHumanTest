@@ -31,8 +31,19 @@ functionality. See [Layer switcher](#layer-switcher--opacity-buttons-wbp_ihpc_la
   * Hover or selected → Figma *Variant2*: bold, green `#B3CA7F`, 1.2× bigger.
   * Click a tab to select it, click again to unselect.
   * **Saved Videos** opens the analysis panel and closes the nav bar (exactly like frame 5).
-  * The other four tabs highlight and fire an event (`OnTabChanged`) — **their screens are not designed yet** (see
-    [07](07_Known_Limitations_And_Next_Steps.md)).
+  * **Profile, Progress, History & Timeline, Settings** *(step 4)* each open their own **empty panel** with the same look
+    as the analysis panel's background — Figma frame 5 **"Rectangle 26"** (black 62 %, radius 29, 1217 × 798, same
+    place). Their content is not designed yet; each panel has an empty area (`…Content`) to build it in.
+  * Opening any panel closes the nav bar (it would cover the top of the panel).
+* **Close "X"** *(step 4)* on the top-right corner of whichever panel is open: closes the panel and unselects the tab
+  (clicking the selected tab again still works too). Not in Figma, so it uses the HUD's own style: a navy `#1D3C55`
+  circle with a thin white rim and a white rounded-stroke X (same stroke style as the menu arrow); hover = nav-bar blue
+  `#274A65`.
+
+| Saved Videos with the X | Profile (empty "Rectangle 26" panel) |
+|---|---|
+| ![](images/unreal_17_saved_videos_close_x.png) | ![](images/unreal_18_profile_panel.png) |
+
 * Clicks on empty parts of the screen still reach the 3D view, so orbit / pan / zoom keep working.
 
 ### Analysis panel (`WBP_IHPC_AnalysisPanel`)

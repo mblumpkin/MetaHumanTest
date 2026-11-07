@@ -19,6 +19,14 @@ Full screen. Created by **`CPP_PlayerController::BeginPlay`** from `BP_PlayerCon
 HudCanvas (Canvas Panel, not hit-testable itself)
 ├─ Timeline (C++, optional)     WBP_IHPC_Timeline, bottom-centre 125 px left of centre (Figma), 28 above the bottom, 1048×102   (step 2)
 ├─ AnalysisPanel (C++)          WBP_IHPC_AnalysisPanel, top-centre, y 167, 1217×798, hidden until Saved Videos
+├─ ProfilePanel (C++, optional)          Border, same slot as AnalysisPanel, rounded box black 62 %, radius 29 (step 4)
+│  └─ ProfileContent                     empty Canvas Panel — put the Profile screen here
+├─ ProgressPanel (C++, optional)         same  └─ ProgressContent
+├─ HistoryTimelinePanel (C++, optional)  same  └─ HistoryTimelineContent
+├─ SettingsPanel (C++, optional)         same  └─ SettingsContent
+├─ PanelCloseButton (C++, optional)      38×38 on the panel's top-right corner (centre 8.5 px in from both edges),
+│  │                                     navy #1D3C55 circle + white rim 35 %; hover #274A65, pressed #183C55
+│  └─ PanelCloseIcon                     T_IHPC_Close 16×16, not clickable itself
 ├─ ChevronGroup (C++)           Size Box 83×83, centre at (screen centre, 105) — moved down 88 when the menu opens
 │  └─ ChevronOverlay
 │     ├─ ChevronCircle (C++)    rounded image, colour set by C++

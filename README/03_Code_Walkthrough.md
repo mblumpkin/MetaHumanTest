@@ -344,7 +344,9 @@ Event: `OnInspectClicked`. Functions: `SetZoomedGraphVisible`, `IsZoomedGraphVis
 [code](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp)
 
 Required: `NavBar`, `ChevronGroup`, `ChevronButton`, `ChevronCircle`, `ChevronIcon`, `Tab_Profile`, `Tab_Progress`,
-`Tab_SavedVideos`, `Tab_HistoryTimeline`, `Tab_Settings`; optional `AnalysisPanel`.
+`Tab_SavedVideos`, `Tab_HistoryTimeline`, `Tab_Settings`; optional `AnalysisPanel`, `Timeline`, and *(step 4)*
+`ProfilePanel`, `ProgressPanel`, `HistoryTimelinePanel`, `SettingsPanel` (empty panels styled like Figma "Rectangle 26")
+and `PanelCloseButton` (the close "X").
 Settings: `AnalysisPanelTab` (Saved Videos), `bStartWithNavBarOpen`, `NavBarHeight` (88), the two chevron textures,
 the two circle colours. Event: `OnTabChanged(NewTab)`.
 
@@ -363,9 +365,16 @@ the two circle colours. Event: `OnTabChanged(NewTab)`.
   `NavBarHeight` when open (render translation), set the circle colour, swap the arrow picture.
 * [`HandleTabClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L144) — clicking the selected tab
   unselects it; otherwise selects the clicked tab.
-* [`SelectTab`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L150) — highlight only the matching tab; open the
-  panel only if the tab is `AnalysisPanelTab`, and then close the nav bar (Figma frame 5); fire `OnTabChanged`.
-* [`SetAnalysisPanelOpen`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L171) — show/collapse the panel.
+* [`SelectTab`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L154-L172) — highlight only the matching tab; `RefreshPanels`; if that tab has a panel, close
+  the nav bar (Figma frame 5); fire `OnTabChanged`.
+* [`GetPanelForTab`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L174-L192) *(step 4)* — which panel a tab opens: the analysis panel for `AnalysisPanelTab`
+  (Saved Videos), otherwise `ProfilePanel` / `ProgressPanel` / `HistoryTimelinePanel` / `SettingsPanel`; nothing for
+  None.
+* [`RefreshPanels`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L194-L209) *(step 4)* — shows the selected tab's panel (`Visible`, so it blocks clicks to the
+  3D view behind it), collapses all the others, and shows the close "X" only while a panel is open.
+* [`HandlePanelCloseClicked`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L211-L214) → [`ClosePanel`](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCHud.h#L111-L113) *(step 4)* — `SelectTab(None)`: panel
+  closed, no tab highlighted. Also callable from Blueprint; [`IsAnyPanelOpen`](../Source/MetaHumanTest/Public/IHPC_UI/CPP_UW_IHPCHud.h#L120-L121) tells whether one is open.
+* [`SetAnalysisPanelOpen`](../Source/MetaHumanTest/Private/IHPC_UI/CPP_UW_IHPCHud.cpp#L216-L226) — show/collapse the analysis panel directly (and the X with it).
 
 ---
 
@@ -536,6 +545,14 @@ visible → `RefreshChevron` (circle moves down 88, turns white, arrow becomes b
 `UCPP_UW_IHPCVideosRow::HandleCardClicked` → green outline on that card → `UIHPCUILibrary::SeekAvatarTimeline(moment
 time)` → `UAnimationTimelineComp::Pause()` + `SetNormalizedTime()` (the avatar pose jumps) → next frame the graphs'
 `NativeTick` reads the new time and the playhead moves.
+
+**The close "X"** *(step 4)*
+`PanelCloseButton.OnClicked` → `UCPP_UW_IHPCHud::HandlePanelCloseClicked` → `ClosePanel` → `SelectTab(None)` → every tab
+un-highlighted → `RefreshPanels` (all panels and the X collapsed) → `OnTabChanged(None)`.
+
+**"Profile"** *(step 4)*
+`HandleTabClicked(Profile)` → `SelectTab(Profile)` → `GetPanelForTab` = `ProfilePanel` → `RefreshPanels` shows it (others
+collapsed) + shows the X → nav bar closed.
 
 **The "Bones" switch**
 CheckBox → `UCPP_UW_IHPCToggleSwitch::HandleCheckStateChanged` → `OnToggled(switch, true)` →

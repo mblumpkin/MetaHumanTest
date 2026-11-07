@@ -17,6 +17,8 @@ Frames are **iPad Pro 12.9" (1366 × 1024)**. All Figma numbers below are Figma 
 | one card inside videos row | `WBP_IHPC_VideoCard` | `UCPP_UW_IHPCVideoCard` |
 | *(not in Figma — rows for the open Active Muscles / Tagged Points sections)* | *(built in code)* | `UCPP_UW_IHPCListRow` |
 | **Step 2:** `ihpc ui (1)ee 1` `124:1059` + text `x1.5` `153:323` (frame 1) | `WBP_IHPC_Timeline` | `UCPP_UW_IHPCTimeline` |
+| **Step 4:** `Rectangle 26` `129:1364` (frame 5) reused for the other tabs | `WBP_IHPC_HUD` → `ProfilePanel`, `ProgressPanel`, `HistoryTimelinePanel`, `SettingsPanel` | `UCPP_UW_IHPCHud` |
+| *(not in Figma)* close "X" | `WBP_IHPC_HUD` → `PanelCloseButton` (+ `T_IHPC_Close`) | `UCPP_UW_IHPCHud` |
 | **Step 3:** `ihpc ui rttd 2` `128:1152` + `Rectangle 24` `128:1151` (frame 1; frame 4 `129:1203` for the Muscles-selected look) | `WBP_IHPC_LayerSwitcher` | `UCPP_UW_IHPCLayerSwitcher` (child of the teammate's `UCPP_UW_AnatomyViewSwitcher`) |
 
 ## Units
@@ -164,6 +166,7 @@ fill, `#7CAFD2` rim (same blue as the timeline track), navy icon. The button tex
 | `T_IHPC_TL_Marker` | drawn from the measured ring/dot sizes and colour | Timeline markers |
 | `T_IHPC_LS_Body_On` / `_Off`, `T_IHPC_LS_Muscles_On` / `_Off`, `T_IHPC_LS_Skeleton_Off` | exact crops of `ihpc ui rttd 2` (4.586×) from frames 1 and 4; badge removed from the skeleton circle | Layer switcher buttons |
 | `T_IHPC_LS_Skeleton_On` | *not drawn in Figma* — rebuilt: empty glossy circle (from the two selected circles) + white skeleton icon | Layer switcher (Skeleton selected) |
+| `T_IHPC_Close` | drawn: white X 16 × 16, stroke 2.6, round caps (style of the header chevron) | Close button on the tab panels |
 | `T_IHPC_LS_Badge` | drawn from the measured sizes: white ring Ø 16.8 + `#EB8D71` dot Ø 13.1 | Skeleton badge |
 
 All icons are rendered at 4× their Figma size so they stay sharp; the Widget Blueprints draw them at the Figma size.

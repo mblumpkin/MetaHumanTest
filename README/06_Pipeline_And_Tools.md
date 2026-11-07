@@ -120,6 +120,23 @@ still smooth icons, try *Mip Gen Settings = Sharpen 1–3* on a texture.
    each change the highlight and fade the avatar (log shows the teammate's code finding the `WholePart`, `FacePart`,
    `SkeletonPart`, `HairPart` parts); no errors (screenshots in [01](01_Overview.md)).
 
+## Step 4 — close "X" + panels for the other tabs
+1. **Read**: Figma frame 5 "Rectangle 26" (`129:1364`) — the panel background already used by the analysis panel
+   (`rgba(0,0,0,0.62)`, radius 29, 1217 × 798, 167 from the top, centred).
+2. **Texture**: `make_close_icon()` in `make_ui_textures.py` → `T_IHPC_Close.png` (white rounded X; the X is not in Figma).
+3. **C++**: `CPP_UW_IHPCHud` — optional `ProfilePanel`, `ProgressPanel`, `HistoryTimelinePanel`, `SettingsPanel`,
+   `PanelCloseButton`; `GetPanelForTab`, `RefreshPanels`, `ClosePanel`, `IsAnyPanelOpen`. Built with the editor closed
+   (*Succeeded*, only the three existing warnings in `CPP_UW_AnatomyViewSwitcher.cpp`).
+4. **Import**: `ue_import_textures.py` (headless); only `T_IHPC_Close` kept (the other re-saves were identical, reverted).
+5. **Widget Blueprint**: `add_tab_panels_and_close_button()` in `build_widget_blueprints.py` — 4 Borders with the
+   Rectangle 26 brush in the analysis panel's slot (each with an empty `…Content` canvas) + the round X on the panel's
+   top-right corner, all inserted before the chevron / nav bar / title bar so those stay on top.
+6. **Test** in Play-In-Editor: Saved Videos → X closes it; Profile → empty styled panel with the X → X closes it; the nav
+   bar closes when a panel opens (screenshots in [01](01_Overview.md)).
+   *Testing note:* the automation clicks the exact centre of a button; the menu arrow's centre lies on the title bar's
+   bottom edge, so it had to click the arrow icon (slightly lower) instead. Real clicks on the visible half of the circle
+   work normally.
+
 ## Fix — rough edges on the timeline and layer buttons
 Even with mipmaps the glossy buttons still had slightly ragged edges. Cause: a fully transparent pixel still stores a
 colour, and the Figma exports store **white** there (the icons drawn by the script store **black**). Unreal shrinks UI

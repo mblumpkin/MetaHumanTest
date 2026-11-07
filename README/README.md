@@ -20,11 +20,14 @@ This folder explains the user interface that was added to the **MetaHumanTest** 
    **Fast-forward** (jumps marker to marker), **Restart**.
 7. **Layer switcher** at the bottom right: **Skeleton** (body fades to 0.2, skeleton shows), **Muscles** (0.5),
    **Body** (fully visible again).
+8. Any tab panel closes with the round **X** on its top-right corner; **Profile / Progress / History & Timeline /
+   Settings** open empty panels ready for their content.
 
 **To-do lists / step-by-step checklists with links to every function:**
 [GitHub issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1) (step 1: HUD, menu, analysis panel) ·
 [GitHub issue #2](https://github.com/mblumpkin/MetaHumanTest/issues/2) (step 2: timeline / playback bar) ·
-[GitHub issue #3](https://github.com/mblumpkin/MetaHumanTest/issues/3) (step 3: layer switcher / opacity buttons)
+[GitHub issue #3](https://github.com/mblumpkin/MetaHumanTest/issues/3) (step 3: layer switcher / opacity buttons) ·
+[GitHub issue #4](https://github.com/mblumpkin/MetaHumanTest/issues/4) (step 4: close X + panels for the other tabs)
 
 ## Pages in this folder
 
@@ -48,7 +51,7 @@ MetaHumanTest/
 │  └─ Private/IHPC_UI/     ← C++ code (what each widget does)
 ├─ Content/UserInterface/IHPC/
 │  ├─ Widgets/             ← 9 Widget Blueprints (the look/layout, editable in UMG)
-│  └─ Textures/            ← 30 UI textures (icons, toggle, card art, glow, shadow, timeline + layer buttons)
+│  └─ Textures/            ← 31 UI textures (icons, toggle, card art, glow, shadow, timeline + layer buttons, close X)
 ├─ SourceArt/Figma/
 │  ├─ Original/            ← files downloaded from Figma
 │  ├─ Screens/             ← reference screenshots of the Figma frames

@@ -18,11 +18,21 @@ Open the Widget Blueprint in `Content/UserInterface/IHPC/Widgets`, select the wi
 `WBP_IHPC_HUD` → Class Defaults → **Analysis Panel Tab**.
 
 ## Add a screen for Profile / Progress / History & Timeline / Settings
-1. Make a new Widget Blueprint for the screen.
-2. In `WBP_IHPC_HUD`, add it to `HudCanvas` (e.g. same place as `AnalysisPanel`), set it **Collapsed**, tick **Is Variable**.
-3. In the HUD's Event Graph, add the event **On Tab Changed** (bound from *IHPC | Events*), and show the screen when
-   `NewTab` equals your tab, hide it otherwise.
-   (Or in C++: add a `BindWidgetOptional` pointer to `CPP_UW_IHPCHud` and show/hide it in `SelectTab`.)
+Each of these tabs already opens its own empty panel (styled like Figma "Rectangle 26") with the close "X" — opening /
+closing is handled by C++. To fill one:
+1. Open `WBP_IHPC_HUD`, find e.g. `ProfilePanel` → **`ProfileContent`** (an empty Canvas Panel, 1217 × 798).
+2. Drop your widgets (or your own Widget Blueprint for the screen) inside `ProfileContent`. Keep the top-right corner
+   free for the X.
+3. Keep the names `ProfilePanel` / `ProgressPanel` / `HistoryTimelinePanel` / `SettingsPanel` (C++ shows/hides them).
+To react in Blueprint as well, use the HUD's **On Tab Changed** event.
+
+## The close "X"
+* **Look**: `WBP_IHPC_HUD` → `PanelCloseButton` → Style (Normal / Hovered / Pressed brushes); the X picture is
+  `PanelCloseIcon` (`T_IHPC_Close`, made by `make_close_icon()` in `make_ui_textures.py`).
+* **Position**: `PanelCloseButton`'s slot (anchored top-centre; x 600, y 175.5 = the panel's top-right corner). If you move
+  or resize the panels, move it with them.
+* **Close from code / a key**: call **Close Panel** on the HUD (`GetMainHUD()->ClosePanel()` from the player controller).
+  **Is Any Panel Open** tells you whether one is showing.
 
 ## Show real saved videos instead of the sample cards
 From Blueprint or C++, build an array of **IHPC Tagged Moment** (Title, Date Text, Time Text, Severity 0–1, Normalized
