@@ -16,6 +16,9 @@ This folder explains the user interface that was added to the **MetaHumanTest** 
 5. Try: **Show graphs**, the **Bones / Nerves / Muscles / Tendons** switches, the **download** icon (writes a CSV),
    the **zoom** icon (big graph), and click a **video card** (the avatar animation jumps to that moment).
 
+**To-do list / step-by-step checklist with links to every function:**
+[GitHub issue #1](https://github.com/mblumpkin/MetaHumanTest/issues/1)
+
 ## Pages in this folder
 
 | Page | What it covers |
