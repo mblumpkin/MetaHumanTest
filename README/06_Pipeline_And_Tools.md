@@ -156,3 +156,14 @@ In Play-In-Editor — top: before, bottom: after (zoomed 4×):
   lockable any more — see step 2 above.)
 * `Binaries/`, `Intermediate/`, `Saved/`, `DerivedDataCache/`, `.vs/`, `*.sln` are ignored (rebuilt automatically).
 * Every step above was committed and pushed separately — see [CHANGELOG.md](CHANGELOG.md).
+
+## Perforce (the team's revision control) next to Git
+This folder is also `//digitalHumans/main/MetaHumanTestCOPY` in Perforce (workspace `mlumpk3_digitalHumans_DMAE`,
+user `mlumpk3` — **without** `@lsu.edu`). Git/GitHub is only a mirror for following the steps.
+* [`.p4ignore`](../.p4ignore) keeps the Git folder/files and the Claude/MCP settings out of Perforce, so *Reconcile
+  Offline Work* does not try to add `.git/` (6,000+ files).
+* Only check out / submit the files that really changed. Checking out the whole folder locks every `.uasset`
+  (exclusive `+l`) for teammates, and Unreal's submit check then validates all of them — including old broken
+  references that were already in the project (`MI_FirstPersonColorway`, StarterContent `_BuiltData`), which blocks the submit.
+* New files must be **marked for add**; Unreal refuses to submit an asset that references one that is not in Perforce
+  (e.g. `BP_PlayerController` → `WBP_IHPC_HUD`).

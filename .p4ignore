@@ -1,0 +1,11 @@
+# Perforce ignore rules for this project folder (used together with the team's ../.p4ignore).
+# Keeps local-only tooling out of Perforce, e.g. when using "Reconcile Offline Work" in P4V.
+
+# Git / GitHub mirror of this project (https://github.com/mblumpkin/MetaHumanTest)
+.git/
+.gitignore
+.gitattributes
+
+# Claude Code / Unreal MCP connection settings (per computer)
+.claude/
+.mcp.json
